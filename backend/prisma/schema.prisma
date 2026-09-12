@@ -1,0 +1,428 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum ProjectStatus {
+  IN_PROGRESS
+  DEVELOPED
+  DISCONTINUED
+}
+
+enum ProjectPlatform {
+  WEBSITE
+  MOBILE
+  BACKEND
+  DESKTOP
+  API
+  OTHER
+}
+
+enum EmploymentType {
+  FULL_TIME
+  PART_TIME
+  FREELANCE
+  CONTRACT
+  INTERNSHIP
+}
+
+enum ToolCategory {
+  FRONTEND
+  BACKEND
+  DATABASE
+  DEVTOOLS
+  DEVOPS
+  DESIGN
+  OTHER
+}
+
+enum LearningType {
+  TOOL
+  CONCEPT
+}
+
+enum LearningState {
+  LEARNING
+  LEARNED
+}
+
+enum CommentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum BlogStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum UserRole {
+  ADMIN
+}
+
+/* =========================
+   USER
+========================= */
+
+model User {
+  id           String   @id @default(cuid())
+
+  name         String
+  email        String   @unique
+  passwordHash String
+  img String?
+
+  role         UserRole @default(ADMIN)
+  isActive     Boolean  @default(true)
+
+  systemSettings SystemSettings[]
+
+  services       Service[]
+  projects       Project[]
+  experiences    Experience[]
+  processSteps   ProcessStep[]
+  tools          Tool[]
+  learningItems  LearningItem[]
+  testimonials   Testimonial[]
+  blogPosts      BlogPost[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([email])
+}
+
+/* =========================
+   SYSTEM SETTINGS
+========================= */
+
+model SystemSettings {
+  id     String @id @default(cuid())
+  userId String
+
+  siteName     String?
+  tagline      String?
+  description  String?
+  profileImage String?
+
+  email    String?
+  phone    String?
+  location String?
+
+  githubUrl   String?
+  linkedinUrl String?
+  resumeUrl   String?
+
+  availability Boolean @default(true)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId])
+}
+
+/* =========================
+   SERVICE
+========================= */
+
+model Service {
+  id     String @id @default(cuid())
+  userId String
+
+  name        String
+  description String
+  icon        String?
+
+  sortOrder Int     @default(0)
+  isActive  Boolean @default(true)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
+/* =========================
+   PROJECT
+========================= */
+
+model Project {
+  id     String @id @default(cuid())
+  userId String
+
+  name        String
+  description String
+
+  images String[]
+
+  liveLink   String?
+  githubLink String?
+
+  status   ProjectStatus
+  platform ProjectPlatform
+
+  approachTaken String?
+
+  featured Boolean @default(false)
+  sortOrder Int     @default(0)
+  isActive  Boolean @default(true)
+
+  user          User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tools         ProjectTool[]
+  comments      ProjectComment[]
+  testimonials  Testimonial[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([platform])
+  @@index([featured])
+}
+
+/* =========================
+   PROJECT TOOL
+========================= */
+
+model ProjectTool {
+  id String @id @default(cuid())
+
+  projectId String
+  toolId    String
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  tool    Tool    @relation(fields: [toolId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([projectId, toolId])
+  @@index([toolId])
+}
+
+/* =========================
+   PROJECT COMMENT
+========================= */
+
+model ProjectComment {
+  id String @id @default(cuid())
+
+  projectId String
+
+  name      String
+  email     String?
+  comment   String
+
+  ipAddress String?
+  userAgent String?
+
+  status CommentStatus @default(PENDING)
+
+  project     Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  testimonial Testimonial?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([projectId])
+  @@index([status])
+}
+
+/* =========================
+   EXPERIENCE
+========================= */
+
+model Experience {
+  id     String @id @default(cuid())
+  userId String
+
+  organization String
+  role         String
+
+  responsibilities String
+  learned          String?
+
+  location String?
+  images   String[]
+
+  employmentType EmploymentType
+
+  startDate DateTime
+  endDate   DateTime?
+  isCurrent Boolean @default(false)
+
+  experienceLetterUrl String?
+
+  sortOrder Int     @default(0)
+  isActive  Boolean @default(true)
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  testimonials Testimonial[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([employmentType])
+  @@index([isCurrent])
+}
+
+/* =========================
+   PROCESS STEP
+========================= */
+
+model ProcessStep {
+  id     String @id @default(cuid())
+  userId String
+
+  name   String
+  detail String
+
+  sortOrder Int     @default(0)
+  isActive  Boolean @default(true)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
+/* =========================
+   TOOL
+========================= */
+
+model Tool {
+  id     String @id @default(cuid())
+  userId String
+
+  name        String
+  logo        String?
+  description String?
+
+  category ToolCategory
+
+  isActive  Boolean @default(true)
+  sortOrder Int     @default(0)
+
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projects      ProjectTool[]
+  learningItems LearningItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, name, category])
+  @@index([userId])
+  @@index([category])
+}
+
+/* =========================
+   LEARNING ITEM
+========================= */
+
+model LearningItem {
+  id     String @id @default(cuid())
+  userId String
+
+  name   String
+  type   LearningType
+
+  logo   String?
+  detail String
+
+  state LearningState @default(LEARNING)
+
+  toolId String?
+  tool   Tool? @relation(fields: [toolId], references: [id], onDelete: SetNull)
+
+  startedAt DateTime?
+  learnedAt DateTime?
+
+  sortOrder Int     @default(0)
+  isActive  Boolean @default(true)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([state])
+  @@index([type])
+  @@index([toolId])
+}
+
+/* =========================
+   TESTIMONIAL
+========================= */
+
+model Testimonial {
+  id     String @id @default(cuid())
+  userId String
+
+  name         String
+  role         String?
+  organization String?
+  image        String?
+  content      String
+
+  projectId    String?
+  experienceId String?
+  commentId    String? @unique
+
+  isApproved Boolean @default(false)
+  isFeatured Boolean @default(false)
+
+  user       User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project    Project?        @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  experience Experience?     @relation(fields: [experienceId], references: [id], onDelete: SetNull)
+  comment    ProjectComment? @relation(fields: [commentId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([projectId])
+  @@index([experienceId])
+  @@index([isApproved])
+  @@index([isFeatured])
+}
+
+/* =========================
+   BLOG POST
+========================= */
+
+model BlogPost {
+  id     String @id @default(cuid())
+  userId String
+
+  title      String
+  slug       String  @unique
+  excerpt    String?
+  content    String
+  coverImage String?
+
+  status BlogStatus @default(DRAFT)
+
+  publishedAt DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([publishedAt])
+}
