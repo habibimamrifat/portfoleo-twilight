@@ -6,6 +6,12 @@ datasource db {
   provider = "postgresql"
 }
 
+/**
+ * =========================
+ * ENUMS
+ * =========================
+ */
+
 enum ProjectStatus {
   IN_PROGRESS
   DEVELOPED
@@ -65,31 +71,35 @@ enum UserRole {
   ADMIN
 }
 
-/* =========================
-   USER
-========================= */
-
 model User {
-  id           String   @id @default(cuid())
+  id String @id @default(cuid())
 
   name         String
-  email        String   @unique
+  email        String @unique
   passwordHash String
-  img String?
 
-  role         UserRole @default(ADMIN)
-  isActive     Boolean  @default(true)
+  img         String?
+  phone       String?
+  location    String?
+  description String?
 
-  systemSettings SystemSettings[]
+  githubUrl   String?
+  linkedinUrl String?
+  resumeUrl   String?
 
-  services       Service[]
-  projects       Project[]
-  experiences    Experience[]
-  processSteps   ProcessStep[]
-  tools          Tool[]
-  learningItems  LearningItem[]
-  testimonials   Testimonial[]
-  blogPosts      BlogPost[]
+  role     UserRole @default(ADMIN)
+  isActive Boolean  @default(true)
+
+  systemSettings SystemSettings?
+
+  services      Service[]
+  projects      Project[]
+  experiences   Experience[]
+  processSteps  ProcessStep[]
+  tools         Tool[]
+  learningItems LearningItem[]
+  testimonials  Testimonial[]
+  blogPosts     BlogPost[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -97,40 +107,28 @@ model User {
   @@index([email])
 }
 
-/* =========================
-   SYSTEM SETTINGS
-========================= */
-
 model SystemSettings {
   id     String @id @default(cuid())
-  userId String
+  userId String @unique
 
-  siteName     String?
-  tagline      String?
-  description  String?
-  profileImage String?
 
-  email    String?
-  phone    String?
-  location String?
+  backgroundColor String?
+  moonlightColor  String?
 
-  githubUrl   String?
-  linkedinUrl String?
-  resumeUrl   String?
+  particleCount        Int?
+  particleColor        String?
+  particleLinksEnabled Boolean?
+  particleLinkColor    String?
 
-  availability Boolean @default(true)
+  cardColor   String?
+  buttonColor String?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  @@unique([userId])
 }
 
-/* =========================
-   SERVICE
-========================= */
 
 model Service {
   id     String @id @default(cuid())
@@ -151,9 +149,11 @@ model Service {
   @@index([userId])
 }
 
-/* =========================
-   PROJECT
-========================= */
+/**
+ * =========================
+ * PROJECT
+ * =========================
+ */
 
 model Project {
   id     String @id @default(cuid())
@@ -172,14 +172,16 @@ model Project {
 
   approachTaken String?
 
-  featured Boolean @default(false)
+  featured  Boolean @default(false)
   sortOrder Int     @default(0)
   isActive  Boolean @default(true)
 
-  user          User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   tools         ProjectTool[]
   comments      ProjectComment[]
   testimonials  Testimonial[]
+  approachSteps ProjectApproachStep[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -190,9 +192,35 @@ model Project {
   @@index([featured])
 }
 
-/* =========================
-   PROJECT TOOL
-========================= */
+/**
+ * =========================
+ * PROJECT APPROACH STEP
+ * =========================
+ */
+
+model ProjectApproachStep {
+  id        String @id @default(cuid())
+  projectId String
+
+  name   String
+  detail String
+
+  sortOrder Int @default(0)
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([projectId])
+  @@index([projectId, sortOrder])
+}
+
+/**
+ * =========================
+ * PROJECT TOOL
+ * =========================
+ */
 
 model ProjectTool {
   id String @id @default(cuid())
@@ -201,7 +229,8 @@ model ProjectTool {
   toolId    String
 
   project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  tool    Tool    @relation(fields: [toolId], references: [id], onDelete: Cascade)
+
+  tool Tool @relation(fields: [toolId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
 
@@ -209,25 +238,22 @@ model ProjectTool {
   @@index([toolId])
 }
 
-/* =========================
-   PROJECT COMMENT
-========================= */
-
 model ProjectComment {
   id String @id @default(cuid())
 
   projectId String
 
-  name      String
-  email     String?
-  comment   String
+  name    String
+  email   String?
+  comment String
 
   ipAddress String?
   userAgent String?
 
   status CommentStatus @default(PENDING)
 
-  project     Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
   testimonial Testimonial?
 
   createdAt DateTime @default(now())
@@ -237,9 +263,11 @@ model ProjectComment {
   @@index([status])
 }
 
-/* =========================
-   EXPERIENCE
-========================= */
+/**
+ * =========================
+ * EXPERIENCE
+ * =========================
+ */
 
 model Experience {
   id     String @id @default(cuid())
@@ -258,14 +286,15 @@ model Experience {
 
   startDate DateTime
   endDate   DateTime?
-  isCurrent Boolean @default(false)
+  isCurrent Boolean   @default(false)
 
   experienceLetterUrl String?
 
   sortOrder Int     @default(0)
   isActive  Boolean @default(true)
 
-  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   testimonials Testimonial[]
 
   createdAt DateTime @default(now())
@@ -276,9 +305,11 @@ model Experience {
   @@index([isCurrent])
 }
 
-/* =========================
-   PROCESS STEP
-========================= */
+/**
+ * =========================
+ * PROCESS STEP
+ * =========================
+ */
 
 model ProcessStep {
   id     String @id @default(cuid())
@@ -296,11 +327,14 @@ model ProcessStep {
   updatedAt DateTime @updatedAt
 
   @@index([userId])
+  @@index([userId, sortOrder])
 }
 
-/* =========================
-   TOOL
-========================= */
+/**
+ * =========================
+ * TOOL
+ * =========================
+ */
 
 model Tool {
   id     String @id @default(cuid())
@@ -315,7 +349,8 @@ model Tool {
   isActive  Boolean @default(true)
   sortOrder Int     @default(0)
 
-  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   projects      ProjectTool[]
   learningItems LearningItem[]
 
@@ -327,16 +362,18 @@ model Tool {
   @@index([category])
 }
 
-/* =========================
-   LEARNING ITEM
-========================= */
+/**
+ * =========================
+ * LEARNING ITEM
+ * =========================
+ */
 
 model LearningItem {
   id     String @id @default(cuid())
   userId String
 
-  name   String
-  type   LearningType
+  name String
+  type LearningType
 
   logo   String?
   detail String
@@ -344,7 +381,8 @@ model LearningItem {
   state LearningState @default(LEARNING)
 
   toolId String?
-  tool   Tool? @relation(fields: [toolId], references: [id], onDelete: SetNull)
+
+  tool Tool? @relation(fields: [toolId], references: [id], onDelete: SetNull)
 
   startedAt DateTime?
   learnedAt DateTime?
@@ -363,9 +401,11 @@ model LearningItem {
   @@index([toolId])
 }
 
-/* =========================
-   TESTIMONIAL
-========================= */
+/**
+ * =========================
+ * TESTIMONIAL
+ * =========================
+ */
 
 model Testimonial {
   id     String @id @default(cuid())
@@ -384,10 +424,12 @@ model Testimonial {
   isApproved Boolean @default(false)
   isFeatured Boolean @default(false)
 
-  user       User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  project    Project?        @relation(fields: [projectId], references: [id], onDelete: SetNull)
-  experience Experience?     @relation(fields: [experienceId], references: [id], onDelete: SetNull)
-  comment    ProjectComment? @relation(fields: [commentId], references: [id], onDelete: SetNull)
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+
+  experience Experience? @relation(fields: [experienceId], references: [id], onDelete: SetNull)
+
+  comment ProjectComment? @relation(fields: [commentId], references: [id], onDelete: SetNull)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -399,9 +441,11 @@ model Testimonial {
   @@index([isFeatured])
 }
 
-/* =========================
-   BLOG POST
-========================= */
+/**
+ * =========================
+ * BLOG POST
+ * =========================
+ */
 
 model BlogPost {
   id     String @id @default(cuid())

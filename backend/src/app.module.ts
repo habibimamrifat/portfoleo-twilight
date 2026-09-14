@@ -5,9 +5,18 @@ import { SystemModule } from './system/system.module';
 import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
 import { PipeModule } from './pipes/validation.pipe';
+import { PrismaModule } from './prisma/prisma.module';
+import { AppConfigModule } from './config/config.module';
 
 @Module({
-  imports: [SystemModule, AuthModule, UserModule, PipeModule],
+  imports: [
+    SystemModule,
+    AuthModule,
+    UserModule,
+    PipeModule,
+    PrismaModule,
+    AppConfigModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })
