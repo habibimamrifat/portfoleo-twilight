@@ -1,7 +1,6 @@
 import { hexToRgba } from "@/util/color";
 import React from "react";
 
-
 interface CardSettings {
   color?: string;
 }
@@ -25,16 +24,34 @@ export default function Card({
   return (
     <div
       className={`
-        rounded-2xl
-        backdrop-blur-xs
-        shadow-lg
+        relative
+        overflow-hidden
+        rounded-3xl
+        border
+        border-white/20
+        shadow-[0_25px_80px_rgba(0,0,0,0.45)]
+        backdrop-blur-2xl
         ${className}
       `}
       style={{
         backgroundColor: cardColor,
-        border: "1px solid rgba(255, 255, 255, 0.20)",
       }}
     >
+      {/* Glass highlight */}
+      <div
+        className="
+          pointer-events-none
+          absolute
+          inset-x-0
+          top-0
+          h-px
+          bg-gradient-to-r
+          from-transparent
+          via-white/40
+          to-transparent
+        "
+      />
+
       {children}
     </div>
   );

@@ -71,6 +71,12 @@ enum UserRole {
   ADMIN
 }
 
+/**
+ * =========================
+ * USER
+ * =========================
+ */
+
 model User {
   id String @id @default(cuid())
 
@@ -86,6 +92,7 @@ model User {
   githubUrl   String?
   linkedinUrl String?
   resumeUrl   String?
+  youtubeUrl  String?
 
   role     UserRole @default(ADMIN)
   isActive Boolean  @default(true)
@@ -98,7 +105,6 @@ model User {
   processSteps  ProcessStep[]
   tools         Tool[]
   learningItems LearningItem[]
-  testimonials  Testimonial[]
   blogPosts     BlogPost[]
 
   createdAt DateTime @default(now())
@@ -107,10 +113,15 @@ model User {
   @@index([email])
 }
 
+/**
+ * =========================
+ * SYSTEM SETTINGS
+ * =========================
+ */
+
 model SystemSettings {
   id     String @id @default(cuid())
   userId String @unique
-
 
   backgroundColor String?
   moonlightColor  String?
@@ -129,6 +140,11 @@ model SystemSettings {
   updatedAt DateTime @updatedAt
 }
 
+/**
+ * =========================
+ * SERVICES
+ * =========================
+ */
 
 model Service {
   id     String @id @default(cuid())
@@ -180,7 +196,6 @@ model Project {
 
   tools         ProjectTool[]
   comments      ProjectComment[]
-  testimonials  Testimonial[]
   approachSteps ProjectApproachStep[]
 
   createdAt DateTime @default(now())
@@ -238,6 +253,12 @@ model ProjectTool {
   @@index([toolId])
 }
 
+/**
+ * =========================
+ * PROJECT COMMENT
+ * =========================
+ */
+
 model ProjectComment {
   id String @id @default(cuid())
 
@@ -253,8 +274,6 @@ model ProjectComment {
   status CommentStatus @default(PENDING)
 
   project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
-
-  testimonial Testimonial?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -294,8 +313,6 @@ model Experience {
   isActive  Boolean @default(true)
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  testimonials Testimonial[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -403,46 +420,6 @@ model LearningItem {
 
 /**
  * =========================
- * TESTIMONIAL
- * =========================
- */
-
-model Testimonial {
-  id     String @id @default(cuid())
-  userId String
-
-  name         String
-  role         String?
-  organization String?
-  image        String?
-  content      String
-
-  projectId    String?
-  experienceId String?
-  commentId    String? @unique
-
-  isApproved Boolean @default(false)
-  isFeatured Boolean @default(false)
-
-  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  project Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
-
-  experience Experience? @relation(fields: [experienceId], references: [id], onDelete: SetNull)
-
-  comment ProjectComment? @relation(fields: [commentId], references: [id], onDelete: SetNull)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([userId])
-  @@index([projectId])
-  @@index([experienceId])
-  @@index([isApproved])
-  @@index([isFeatured])
-}
-
-/**
- * =========================
  * BLOG POST
  * =========================
  */
@@ -463,10 +440,41 @@ model BlogPost {
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  comments BlogComment[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([userId])
   @@index([status])
   @@index([publishedAt])
+}
+
+/**
+ * =========================
+ * BLOG COMMENT
+ * =========================
+ */
+
+model BlogComment {
+  id String @id @default(cuid())
+
+  blogPostId String
+
+  name    String
+  email   String?
+  comment String
+
+  ipAddress String?
+  userAgent String?
+
+  status CommentStatus @default(PENDING)
+
+  blogPost BlogPost @relation(fields: [blogPostId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([blogPostId])
+  @@index([status])
 }

@@ -7,35 +7,91 @@ import {
   Database,
   Wrench,
 } from "lucide-react";
+import { useEffect, useState } from "react";
 
-const services = [
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+
+type Service = {
+  id: string;
+  name: string;
+  description: string;
+  icon?: string | null;
+  sortOrder: number;
+};
+
+const iconMap = {
+  Globe,
+  ServerCog,
+  Database,
+  Wrench,
+};
+
+const defaultServices: Service[] = [
   {
-    title: "Full-Stack Development",
+    id: "1",
+    name: "Full-Stack Development",
     description:
       "Complete web applications from frontend interfaces to backend APIs and databases.",
-    icon: Globe,
+    icon: "Globe",
+    sortOrder: 1,
   },
   {
-    title: "Backend Development",
+    id: "2",
+    name: "Backend Development",
     description:
       "REST APIs, authentication, business logic, database integration and backend architecture.",
-    icon: ServerCog,
+    icon: "ServerCog",
+    sortOrder: 2,
   },
   {
-    title: "Database Design",
+    id: "3",
+    name: "Database Design",
     description:
       "Structured relational and NoSQL data models designed around application requirements.",
-    icon: Database,
+    icon: "Database",
+    sortOrder: 3,
   },
   {
-    title: "Existing System Improvement",
+    id: "4",
+    name: "Existing System Improvement",
     description:
       "Refactoring, debugging and improving existing applications and backend systems.",
-    icon: Wrench,
+    icon: "Wrench",
+    sortOrder: 4,
   },
 ];
 
 export default function Services() {
+  const [services, setServices] =
+    useState<Service[]>(defaultServices);
+
+  useEffect(() => {
+    async function getServices() {
+      try {
+        const response = await fetch(
+          `${BASE_URL}/services`,
+        );
+
+        if (!response.ok) {
+          return;
+        }
+
+        const result = await response.json();
+
+        if (
+          Array.isArray(result.data) &&
+          result.data.length > 0
+        ) {
+          setServices(result.data);
+        }
+      } catch {
+        setServices(defaultServices);
+      }
+    }
+
+    getServices();
+  }, []);
+
   return (
     <section
       id="services"
@@ -54,11 +110,14 @@ export default function Services() {
 
         <div className="grid gap-4 sm:grid-cols-2">
           {services.map((service) => {
-            const Icon = service.icon;
+            const Icon =
+              iconMap[
+                service.icon as keyof typeof iconMap
+              ] || Wrench;
 
             return (
               <Card
-                key={service.title}
+                key={service.id}
                 className="p-7 transition duration-300 hover:bg-white/10"
               >
                 <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-white/10 bg-white/5">
@@ -69,7 +128,7 @@ export default function Services() {
                 </div>
 
                 <h3 className="mt-5 text-lg font-semibold">
-                  {service.title}
+                  {service.name}
                 </h3>
 
                 <p className="mt-3 text-sm leading-6 text-white/50">

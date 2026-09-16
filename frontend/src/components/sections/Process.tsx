@@ -1,41 +1,86 @@
 "use client";
 
 import Card from "../common/Card";
+import { useEffect, useState } from "react";
 
-const steps = [
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+
+type ProcessStep = {
+  id: string;
+  name: string;
+  detail: string;
+  sortOrder: number;
+};
+
+const defaultSteps: ProcessStep[] = [
   {
-    number: "01",
-    title: "Understand",
-    description:
+    id: "understand",
+    name: "Understand",
+    detail:
       "Understand the business, users, requirements and technical constraints.",
+    sortOrder: 1,
   },
   {
-    number: "02",
-    title: "Plan",
-    description:
+    id: "plan",
+    name: "Plan",
+    detail:
       "Break the requirements into features, architecture, data models and development tasks.",
+    sortOrder: 2,
   },
   {
-    number: "03",
-    title: "Build",
-    description:
+    id: "build",
+    name: "Build",
+    detail:
       "Develop the system incrementally with clean, maintainable and testable code.",
+    sortOrder: 3,
   },
   {
-    number: "04",
-    title: "Improve",
-    description:
+    id: "improve",
+    name: "Improve",
+    detail:
       "Test, review, optimize and prepare the application for real-world usage.",
+    sortOrder: 4,
   },
   {
-    number: "05",
-    title: "Deliver",
-    description:
+    id: "deliver",
+    name: "Deliver",
+    detail:
       "Deploy the completed product and provide the foundation for future improvements.",
+    sortOrder: 5,
   },
 ];
 
 export default function Process() {
+  const [steps, setSteps] =
+    useState<ProcessStep[]>(defaultSteps);
+
+  useEffect(() => {
+    async function getProcessSteps() {
+      try {
+        const response = await fetch(
+          `${BASE_URL}/process-steps`,
+        );
+
+        if (!response.ok) {
+          return;
+        }
+
+        const result = await response.json();
+
+        if (
+          Array.isArray(result.data) &&
+          result.data.length > 0
+        ) {
+          setSteps(result.data);
+        }
+      } catch {
+        setSteps(defaultSteps);
+      }
+    }
+
+    getProcessSteps();
+  }, []);
+
   return (
     <section
       id="process"
@@ -53,22 +98,22 @@ export default function Process() {
         </div>
 
         <div className="grid gap-4">
-          {steps.map((step) => (
+          {steps.map((step, index) => (
             <Card
-              key={step.number}
+              key={step.id}
               className="flex gap-5 p-6"
             >
               <span className="text-2xl font-bold text-blue-400/60">
-                {step.number}
+                {String(index + 1).padStart(2, "0")}
               </span>
 
               <div>
                 <h3 className="font-semibold">
-                  {step.title}
+                  {step.name}
                 </h3>
 
                 <p className="mt-2 text-sm leading-6 text-white/50">
-                  {step.description}
+                  {step.detail}
                 </p>
               </div>
             </Card>

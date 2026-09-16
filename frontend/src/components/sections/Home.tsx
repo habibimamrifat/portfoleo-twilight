@@ -6,15 +6,100 @@ import {
   ArrowDown,
   ArrowRight,
 } from "lucide-react";
+import {
+  FaGithub,
+  FaLinkedin,
+  FaYoutube,
+} from "react-icons/fa";
+import { useEffect, useState } from "react";
 import { useApp } from "../context/AppContext";
+
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+
+const EXPERIENCE_START_DATE = new Date(
+  "2025-01-18T00:00:00",
+);
+
+type UserData = {
+  name?: string;
+  img?: string | null;
+  description?: string | null;
+  githubUrl?: string | null;
+  linkedinUrl?: string | null;
+  youtubeUrl?: string | null;
+};
+
+const defaultUser: UserData = {
+  name: "Habib Rifat",
+  img: "/profilePic.jpg",
+  description:
+    "Backend-focused full-stack developer specializing in reliable APIs, scalable architectures, and modern web experiences.",
+  githubUrl: null,
+  linkedinUrl: null,
+  youtubeUrl: null,
+};
+
+function calculateExperience() {
+  const now = new Date();
+
+  const difference =
+    now.getTime() -
+    EXPERIENCE_START_DATE.getTime();
+
+  const years =
+    difference /
+    (1000 * 60 * 60 * 24 * 365.25);
+
+  return `${years.toFixed(1)}+`;
+}
 
 export default function Home() {
   const { openPopup } = useApp();
 
+  const [user, setUser] =
+    useState<UserData>(defaultUser);
+
+  useEffect(() => {
+    async function getUser() {
+      try {
+        const response = await fetch(
+          `${BASE_URL}/users/get-me`,
+        );
+
+        if (!response.ok) {
+          return;
+        }
+
+        const result = await response.json();
+
+        setUser({
+          ...defaultUser,
+          ...result.data,
+        });
+      } catch {
+        setUser(defaultUser);
+      }
+    }
+
+    getUser();
+  }, []);
+
+  const profileImage: string =
+    user.img || defaultUser.img!;
+
+  const name: string =
+    user.name || defaultUser.name!;
+
+  const description: string =
+    user.description ||
+    defaultUser.description!;
+
+  const experience = calculateExperience();
+
   return (
     <section id="home">
       {/* Mobile / Tablet Home */}
-      <div className="mt-18 xl:mt-16 w-full space-y-6 xl:hidden px-6 lg:px-10">
+      <div className="mt-18 w-full space-y-6 px-6 lg:px-10 xl:hidden">
         <Card className="overflow-hidden p-6 sm:p-8">
           <div className="flex flex-col items-center text-center">
             {/* Profile Image */}
@@ -40,8 +125,8 @@ export default function Home() {
               "
             >
               <Image
-                src="/profilePic.jpg"
-                alt="Habib Rifat"
+                src={profileImage}
+                alt={name}
                 fill
                 sizes="(max-width: 640px) 160px, 192px"
                 className="object-cover"
@@ -65,9 +150,7 @@ export default function Home() {
             </h1>
 
             <p className="mt-5 max-w-xl text-sm leading-6 text-white/60 sm:text-base">
-              Backend-focused full-stack developer specializing in
-              reliable APIs, scalable architectures, and modern web
-              experiences using Node.js, React, Next.js, and PostgreSQL.
+              {description}
             </p>
 
             {/* Buttons */}
@@ -118,13 +201,97 @@ export default function Home() {
                 Lets Work Together
               </a>
             </div>
+
+            {/* Social Links */}
+            <div className="mt-6 flex items-center justify-center gap-3">
+              {user.githubUrl && (
+                <a
+                  href={user.githubUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="GitHub"
+                  className="
+                    flex
+                    h-10
+                    w-10
+                    items-center
+                    justify-center
+                    rounded-xl
+                    border
+                    border-white/10
+                    bg-white/5
+                    text-white/60
+                    backdrop-blur-md
+                    transition
+                    hover:bg-white/10
+                    hover:text-white
+                  "
+                >
+                  <FaGithub size={20} />
+                </a>
+              )}
+
+              {user.linkedinUrl && (
+                <a
+                  href={user.linkedinUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="LinkedIn"
+                  className="
+                    flex
+                    h-10
+                    w-10
+                    items-center
+                    justify-center
+                    rounded-xl
+                    border
+                    border-white/10
+                    bg-white/5
+                    text-white/60
+                    backdrop-blur-md
+                    transition
+                    hover:bg-white/10
+                    hover:text-white
+                  "
+                >
+                  <FaLinkedin size={20} />
+                </a>
+              )}
+
+              {user.youtubeUrl && (
+                <a
+                  href={user.youtubeUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="YouTube"
+                  className="
+                    flex
+                    h-10
+                    w-10
+                    items-center
+                    justify-center
+                    rounded-xl
+                    border
+                    border-white/10
+                    bg-white/5
+                    text-white/60
+                    backdrop-blur-md
+                    transition
+                    hover:bg-white/10
+                    hover:text-white
+                  "
+                >
+                  <FaYoutube size={20} />
+                </a>
+              )}
+            </div>
           </div>
         </Card>
 
         {/* Stats */}
         <div className="grid grid-cols-2 gap-4">
           {[
-            ["1.5+", "Years Experience"],
+            [experience, "Years Experience"],
             ["20+", "Projects Built"],
             ["10+", "Technologies"],
             ["100%", "Learning Mindset"],
@@ -169,11 +336,10 @@ export default function Home() {
             </h1>
 
             <p className="mt-6 max-w-2xl text-base leading-7 text-white/60">
-              Backend-focused full-stack developer specializing in
-              reliable APIs, scalable architectures, and modern web
-              experiences using Node.js, React, Next.js, and PostgreSQL.
+              {description}
             </p>
 
+            {/* Buttons */}
             <div className="mt-8 flex flex-wrap gap-3">
               <a
                 href="#projects"
@@ -219,13 +385,97 @@ export default function Home() {
                 Lets Work Together
               </a>
             </div>
+
+            {/* Social Links */}
+            <div className="mt-6 flex items-center gap-3">
+              {user.githubUrl && (
+                <a
+                  href={user.githubUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="GitHub"
+                  className="
+                    flex
+                    h-10
+                    w-10
+                    items-center
+                    justify-center
+                    rounded-xl
+                    border
+                    border-white/10
+                    bg-white/5
+                    text-white/60
+                    backdrop-blur-md
+                    transition
+                    hover:bg-white/10
+                    hover:text-white
+                  "
+                >
+                  <FaGithub size={20} />
+                </a>
+              )}
+
+              {user.linkedinUrl && (
+                <a
+                  href={user.linkedinUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="LinkedIn"
+                  className="
+                    flex
+                    h-10
+                    w-10
+                    items-center
+                    justify-center
+                    rounded-xl
+                    border
+                    border-white/10
+                    bg-white/5
+                    text-white/60
+                    backdrop-blur-md
+                    transition
+                    hover:bg-white/10
+                    hover:text-white
+                  "
+                >
+                  <FaLinkedin size={20} />
+                </a>
+              )}
+
+              {user.youtubeUrl && (
+                <a
+                  href={user.youtubeUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="YouTube"
+                  className="
+                    flex
+                    h-10
+                    w-10
+                    items-center
+                    justify-center
+                    rounded-xl
+                    border
+                    border-white/10
+                    bg-white/5
+                    text-white/60
+                    backdrop-blur-md
+                    transition
+                    hover:bg-white/10
+                    hover:text-white
+                  "
+                >
+                  <FaYoutube size={20} />
+                </a>
+              )}
+            </div>
           </div>
         </Card>
 
         {/* Stats */}
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
           {[
-            ["1.5+", "Years Experience"],
+            [experience, "Years Experience"],
             ["20+", "Projects Built"],
             ["10+", "Technologies"],
             ["100%", "Learning Mindset"],

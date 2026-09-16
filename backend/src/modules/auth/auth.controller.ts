@@ -3,7 +3,7 @@ import type { Request } from 'express';
 
 import { AuthService } from './auth.service';
 import { LoginDto, ChangePasswordDto } from './dto/auth.dto';
-import { RouteFor, routeTypeObj } from '../decorators/route.decorator';
+import { RouteFor, routeTypeObj } from '../../decorators/route.decorator';
 
 @Controller('auth')
 export class AuthController {

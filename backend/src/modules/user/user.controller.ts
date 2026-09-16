@@ -11,17 +11,17 @@ import {
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { ResponseMessage } from '../decorators/response-message.decorator';
-import { RouteFor, routeTypeObj } from '../decorators/route.decorator';
+import { ResponseMessage } from '../../decorators/response-message.decorator';
+import { RouteFor, routeTypeObj } from '../../decorators/route.decorator';
 
 @Controller('users')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
-  @Get('portfolio')
+  @Get('get-me')
   @RouteFor(routeTypeObj.PUBLIC)
-  @ResponseMessage('Portfolio retrieved successfully')
-  getPortfolio() {
+  @ResponseMessage('User retrieved successfully')
+  getMe() {
     return this.userService.getPortfolio();
   }
 
@@ -49,10 +49,7 @@ export class UserController {
   @Patch(':id')
   @RouteFor(routeTypeObj.ADMIN)
   @ResponseMessage('User updated successfully')
-  update(
-    @Param('id') id: string,
-    @Body() updateUserDto: UpdateUserDto,
-  ) {
+  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
     return this.userService.update(id, updateUserDto);
   }
 

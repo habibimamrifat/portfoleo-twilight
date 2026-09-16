@@ -2,29 +2,76 @@
 
 import Card from "../common/Card";
 import { Quote } from "lucide-react";
+import { useEffect, useState } from "react";
 
-const testimonials = [
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+
+type Testimonial = {
+  id: string;
+  name: string;
+  role: string;
+  message: string;
+  projectName?: string;
+};
+
+const defaultTestimonials: Testimonial[] = [
   {
+    id: "client-one",
     name: "Client One",
     role: "Product Manager",
     message:
       "Habib was reliable, communicative and focused on solving the actual problem rather than just writing code.",
+    projectName: "Project",
   },
   {
+    id: "client-two",
     name: "Client Two",
     role: "Startup Founder",
     message:
       "The project was delivered with a strong focus on backend structure and long-term maintainability.",
+    projectName: "Project",
   },
   {
+    id: "client-three",
     name: "Client Three",
     role: "Developer",
     message:
       "A thoughtful developer who cares about understanding the system and continuously improving his work.",
+    projectName: "Project",
   },
 ];
 
 export default function Testimonials() {
+  const [testimonials, setTestimonials] =
+    useState<Testimonial[]>(defaultTestimonials);
+
+  useEffect(() => {
+    async function getTestimonials() {
+      try {
+        const response = await fetch(
+          `${BASE_URL}/project-comments/testimonials`,
+        );
+
+        if (!response.ok) {
+          return;
+        }
+
+        const result = await response.json();
+
+        if (
+          Array.isArray(result.data) &&
+          result.data.length > 0
+        ) {
+          setTestimonials(result.data);
+        }
+      } catch {
+        setTestimonials(defaultTestimonials);
+      }
+    }
+
+    getTestimonials();
+  }, []);
+
   return (
     <section
       id="testimonials"
@@ -44,7 +91,7 @@ export default function Testimonials() {
         <div className="grid gap-4">
           {testimonials.map((testimonial) => (
             <Card
-              key={testimonial.name}
+              key={testimonial.id}
               className="p-7"
             >
               <Quote
@@ -52,8 +99,8 @@ export default function Testimonials() {
                 className="text-blue-400"
               />
 
-              <p className="mt-5 text-sm leading-7 text-white/60">
-                "{testimonial.message}"
+             <p className="mt-5 text-sm leading-7 text-white/60">
+                &quot;{testimonial.message}&quot;
               </p>
 
               <div className="mt-6">
@@ -64,6 +111,12 @@ export default function Testimonials() {
                 <p className="mt-1 text-xs text-white/40">
                   {testimonial.role}
                 </p>
+
+                {testimonial.projectName && (
+                  <p className="mt-1 text-xs text-white/30">
+                    {testimonial.projectName}
+                  </p>
+                )}
               </div>
             </Card>
           ))}
