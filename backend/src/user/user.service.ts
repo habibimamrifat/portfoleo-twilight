@@ -72,6 +72,125 @@ export class UserService {
     return user;
   }
 
+  async getPortfolio() {
+    const user = await this.prisma.user.findFirst({
+      where: {
+        isActive: true,
+      },
+      select: {
+        id: true,
+        name: true,
+        img: true,
+        phone: true,
+        location: true,
+        description: true,
+
+        githubUrl: true,
+        linkedinUrl: true,
+        resumeUrl: true,
+
+        systemSettings: true,
+
+        services: {
+          where: {
+            isActive: true,
+          },
+          orderBy: {
+            sortOrder: 'asc',
+          },
+        },
+
+        projects: {
+          where: {
+            isActive: true,
+          },
+          orderBy: {
+            sortOrder: 'asc',
+          },
+          include: {
+            tools: {
+              include: {
+                tool: true,
+              },
+            },
+            approachSteps: {
+              orderBy: {
+                sortOrder: 'asc',
+              },
+            },
+          },
+        },
+
+        experiences: {
+          where: {
+            isActive: true,
+          },
+          orderBy: {
+            sortOrder: 'asc',
+          },
+          include: {
+            testimonials: {
+              where: {
+                isApproved: true,
+              },
+            },
+          },
+        },
+
+        processSteps: {
+          where: {
+            isActive: true,
+          },
+          orderBy: {
+            sortOrder: 'asc',
+          },
+        },
+
+        tools: {
+          where: {
+            isActive: true,
+          },
+          orderBy: {
+            sortOrder: 'asc',
+          },
+        },
+
+        learningItems: {
+          where: {
+            isActive: true,
+          },
+          orderBy: {
+            sortOrder: 'asc',
+          },
+        },
+
+        testimonials: {
+          where: {
+            isApproved: true,
+          },
+          orderBy: {
+            createdAt: 'desc',
+          },
+        },
+
+        blogPosts: {
+          where: {
+            status: 'PUBLISHED',
+          },
+          orderBy: {
+            publishedAt: 'desc',
+          },
+        },
+      },
+    });
+
+    if (!user) {
+      throw new NotFoundException('Portfolio not found');
+    }
+
+    return user;
+  }
+
   async update(id: string, updateUserDto: UpdateUserDto) {
     const existingUser = await this.prisma.user.findUnique({
       where: {

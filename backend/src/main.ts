@@ -16,7 +16,15 @@ async function bootstrap() {
 
   await seedDatabase(prisma, config);
 
+  const configService = app.get(ConfigService);
+
+  app.enableCors({
+    origin: configService.get<string>('FRONTEND_URL'),
+    credentials: true,
+  });
+
   await app.listen(process.env.PORT ?? 3000);
+
   console.log(`server is running on port ${process.env.PORT || 3000}`);
 }
 bootstrap();
