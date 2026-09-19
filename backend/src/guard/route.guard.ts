@@ -19,7 +19,7 @@ export class RouteGuard implements CanActivate {
     );
 
     // Explicitly public
-    if (routeType === 'public') {
+    if (routeType === 'PUBLIC') {
       return true;
     }
 

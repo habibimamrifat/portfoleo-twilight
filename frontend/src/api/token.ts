@@ -12,7 +12,12 @@ function getPortfolio(): PortfolioStorage {
     return {};
   }
 
-  return JSON.parse(data);
+  try {
+    return JSON.parse(data);
+  } catch {
+    localStorage.removeItem(PORTFOLIO);
+    return {};
+  }
 }
 
 function setPortfolio(data: PortfolioStorage) {
@@ -22,11 +27,11 @@ function setPortfolio(data: PortfolioStorage) {
   );
 }
 
-export function getAuthToken() {
+export function getAuthToken(): string | undefined {
   return getPortfolio().authToken;
 }
 
-export function getRenewToken() {
+export function getRenewToken(): string | undefined {
   return getPortfolio().renewToken;
 }
 

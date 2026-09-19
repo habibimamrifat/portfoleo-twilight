@@ -71,11 +71,14 @@ export class UserController {
       },
     }),
   )
+  
   @ResponseMessage('User updated successfully')
+  @RouteFor(routeTypeObj.ADMIN)
   update(
     @Param('id') id: string,
     @Body() updateUserDto: UpdateUserDto,
-    @UploadedFile() file?: Express.Multer.File,
+    @UploadedFile()
+    file?: Express.Multer.File,
   ) {
     return this.userService.update(id, updateUserDto, file);
   }

@@ -3,10 +3,14 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+
 import * as bcrypt from 'bcrypt';
+
 import { PrismaService } from '../../prisma/prisma.service';
+
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+
 import { CloudinaryService } from '../../helpers/cloudinary/cloudanry.service';
 
 @Injectable()
@@ -16,6 +20,11 @@ export class UserService {
     private readonly cloudinaryService: CloudinaryService,
   ) {}
 
+  /*
+   * =========================================================
+   * CREATE USER
+   * =========================================================
+   */
   async create(createUserDto: CreateUserDto) {
     const existingUser = await this.prisma.user.findUnique({
       where: {
@@ -41,29 +50,50 @@ export class UserService {
         description: createUserDto.description,
 
         githubUrl: createUserDto.githubUrl,
+
         linkedinUrl: createUserDto.linkedinUrl,
+
         resumeUrl: createUserDto.resumeUrl,
+
+        /*
+         * IMPORTANT:
+         * You were missing this before.
+         */
+        youtubeUrl: createUserDto.youtubeUrl,
       },
+
       select: this.publicUserSelect(),
     });
 
     return user;
   }
 
+  /*
+   * =========================================================
+   * FIND ALL
+   * =========================================================
+   */
   async findAll() {
     return this.prisma.user.findMany({
       select: this.publicUserSelect(),
+
       orderBy: {
         createdAt: 'desc',
       },
     });
   }
 
+  /*
+   * =========================================================
+   * FIND ONE
+   * =========================================================
+   */
   async findOne(id: string) {
     const user = await this.prisma.user.findUnique({
       where: {
         id,
       },
+
       select: this.publicUserSelect(),
     });
 
@@ -74,11 +104,17 @@ export class UserService {
     return user;
   }
 
+  /*
+   * =========================================================
+   * GET PORTFOLIO
+   * =========================================================
+   */
   async getPortfolio() {
     const user = await this.prisma.user.findFirst({
       where: {
         isActive: true,
       },
+
       select: {
         id: true,
         name: true,
@@ -91,12 +127,19 @@ export class UserService {
         linkedinUrl: true,
         resumeUrl: true,
 
+        /*
+         * IMPORTANT:
+         * You were missing this before.
+         */
+        youtubeUrl: true,
+
         systemSettings: true,
 
         services: {
           where: {
             isActive: true,
           },
+
           orderBy: {
             sortOrder: 'asc',
           },
@@ -106,15 +149,18 @@ export class UserService {
           where: {
             isActive: true,
           },
+
           orderBy: {
             sortOrder: 'asc',
           },
+
           include: {
             tools: {
               include: {
                 tool: true,
               },
             },
+
             approachSteps: {
               orderBy: {
                 sortOrder: 'asc',
@@ -127,6 +173,7 @@ export class UserService {
           where: {
             isActive: true,
           },
+
           orderBy: {
             sortOrder: 'asc',
           },
@@ -136,6 +183,7 @@ export class UserService {
           where: {
             isActive: true,
           },
+
           orderBy: {
             sortOrder: 'asc',
           },
@@ -145,6 +193,7 @@ export class UserService {
           where: {
             isActive: true,
           },
+
           orderBy: {
             sortOrder: 'asc',
           },
@@ -154,6 +203,7 @@ export class UserService {
           where: {
             isActive: true,
           },
+
           orderBy: {
             sortOrder: 'asc',
           },
@@ -163,6 +213,7 @@ export class UserService {
           where: {
             status: 'PUBLISHED',
           },
+
           orderBy: {
             publishedAt: 'desc',
           },
@@ -177,11 +228,18 @@ export class UserService {
     return user;
   }
 
+  /*
+   * =========================================================
+   * UPDATE USER
+   * =========================================================
+   */
   async update(
     id: string,
     updateUserDto: UpdateUserDto,
     file?: Express.Multer.File,
   ) {
+    console.log('I am being called from the user update');
+
     const existingUser = await this.prisma.user.findUnique({
       where: {
         id,
@@ -192,6 +250,11 @@ export class UserService {
       throw new NotFoundException('User not found');
     }
 
+    /*
+     * =======================================================
+     * EMAIL DUPLICATE CHECK
+     * =======================================================
+     */
     if (updateUserDto.email && updateUserDto.email !== existingUser.email) {
       const emailExists = await this.prisma.user.findUnique({
         where: {
@@ -204,6 +267,11 @@ export class UserService {
       }
     }
 
+    /*
+     * =======================================================
+     * UPDATE DATA
+     * =======================================================
+     */
     const data: {
       name?: string;
       email?: string;
@@ -215,46 +283,83 @@ export class UserService {
       githubUrl?: string;
       linkedinUrl?: string;
       resumeUrl?: string;
+      youtubeUrl?: string;
     } = {};
 
+    /*
+     * NAME
+     */
     if (updateUserDto.name !== undefined) {
       data.name = updateUserDto.name;
     }
 
+    /*
+     * EMAIL
+     */
     if (updateUserDto.email !== undefined) {
       data.email = updateUserDto.email;
     }
 
+    /*
+     * PASSWORD
+     */
     if (updateUserDto.password !== undefined) {
       data.passwordHash = await bcrypt.hash(updateUserDto.password, 12);
     }
 
+    /*
+     * PHONE
+     */
     if (updateUserDto.phone !== undefined) {
       data.phone = updateUserDto.phone;
     }
 
+    /*
+     * LOCATION
+     */
     if (updateUserDto.location !== undefined) {
       data.location = updateUserDto.location;
     }
 
+    /*
+     * DESCRIPTION
+     */
     if (updateUserDto.description !== undefined) {
       data.description = updateUserDto.description;
     }
 
+    /*
+     * GITHUB
+     */
     if (updateUserDto.githubUrl !== undefined) {
       data.githubUrl = updateUserDto.githubUrl;
     }
 
+    /*
+     * LINKEDIN
+     */
     if (updateUserDto.linkedinUrl !== undefined) {
       data.linkedinUrl = updateUserDto.linkedinUrl;
     }
 
+    /*
+     * RESUME
+     */
     if (updateUserDto.resumeUrl !== undefined) {
       data.resumeUrl = updateUserDto.resumeUrl;
     }
 
     /*
-     * Upload new profile image to Cloudinary
+     * YOUTUBE
+     */
+    if (updateUserDto.youtubeUrl !== undefined) {
+      data.youtubeUrl = updateUserDto.youtubeUrl;
+    }
+
+    /*
+     * =======================================================
+     * PROFILE IMAGE
+     * =======================================================
      */
     if (file) {
       const uploadedImage = await this.cloudinaryService.uploadImage(
@@ -265,17 +370,29 @@ export class UserService {
       data.img = uploadedImage.url;
     }
 
+    /*
+     * =======================================================
+     * UPDATE DATABASE
+     * =======================================================
+     */
     const updatedUser = await this.prisma.user.update({
       where: {
         id,
       },
+
       data,
+
       select: this.publicUserSelect(),
     });
 
     return updatedUser;
   }
 
+  /*
+   * =========================================================
+   * DELETE USER
+   * =========================================================
+   */
   async remove(id: string) {
     const existingUser = await this.prisma.user.findUnique({
       where: {
@@ -298,6 +415,11 @@ export class UserService {
     };
   }
 
+  /*
+   * =========================================================
+   * PUBLIC USER SELECT
+   * =========================================================
+   */
   private publicUserSelect() {
     return {
       id: true,
@@ -307,9 +429,12 @@ export class UserService {
       phone: true,
       location: true,
       description: true,
+
       githubUrl: true,
       linkedinUrl: true,
       resumeUrl: true,
+      youtubeUrl: true,
+
       role: true,
       isActive: true,
       createdAt: true,

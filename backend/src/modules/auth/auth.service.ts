@@ -4,8 +4,9 @@ import { Request } from 'express';
 import { PrismaService } from '../../prisma/prisma.service';
 import { LoginDto, ChangePasswordDto } from './dto/auth.dto';
 import { BcryptService } from '../../helpers/bcript/bcript.service';
-import { JwtCustomService } from '../../helpers/jwt/jwtCustom.module';
+
 import { CurrentUserType } from '../../decorators/current-user.decorator';
+import { JwtCustomService } from '../../helpers/jwt/jwtCustom.service';
 
 @Injectable()
 export class AuthService {
@@ -74,6 +75,7 @@ export class AuthService {
 
     try {
       payload = this.jwtService.verifyRenewToken(token);
+      console.log('here is renew payload', payload);
     } catch {
       throw new UnauthorizedException('Invalid or expired renew token');
     }
@@ -101,9 +103,15 @@ export class AuthService {
       email: user.email,
       role: user.role,
     });
+    const renewToken = this.jwtService.createRenewToken({
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+    });
 
     return {
       authToken,
+      renewToken
     };
   }
 
@@ -155,7 +163,7 @@ export class AuthService {
     };
   }
 
-  async logout(request: Request) {
+  logout(request: Request) {
     const userId = request.user?.sub;
 
     if (!userId) {

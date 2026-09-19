@@ -16,9 +16,10 @@ import { memoryStorage } from 'multer';
 import { CreateProjectDto, UpdateProjectDto } from './dto/project.dto';
 
 import { CurrentUser } from '../../decorators/current-user.decorator';
-import { ProjectsService } from './projects.service';
 import { RouteFor, routeTypeObj } from '../../decorators/route.decorator';
 import { ResponseMessage } from '../../decorators/response-message.decorator';
+
+import { ProjectsService } from './projects.service';
 
 import type { CurrentUserType } from '../../types/currentUser';
 
@@ -43,8 +44,8 @@ export class ProjectsController {
   )
   create(
     @CurrentUser() user: CurrentUserType,
-    @UploadedFiles() images: Express.Multer.File[],
     @Body() createProjectDto: CreateProjectDto,
+    @UploadedFiles() images: Express.Multer.File[],
   ) {
     return this.projectsService.create(
       user.sub,
@@ -70,8 +71,8 @@ export class ProjectsController {
   )
   update(
     @Param('id') id: string,
-    @UploadedFiles() images: Express.Multer.File[],
     @Body() updateProjectDto: UpdateProjectDto,
+    @UploadedFiles() images: Express.Multer.File[],
   ) {
     return this.projectsService.update(id, updateProjectDto, images ?? []);
   }

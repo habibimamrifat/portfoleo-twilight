@@ -11,6 +11,7 @@ import {
 } from '@nestjs/common';
 
 import { FilesInterceptor } from '@nestjs/platform-express';
+
 import { memoryStorage } from 'multer';
 
 import { RouteFor, routeTypeObj } from '../../decorators/route.decorator';
@@ -19,11 +20,11 @@ import { ResponseMessage } from '../../decorators/response-message.decorator';
 
 import { CurrentUser } from '../../decorators/current-user.decorator';
 
-import { ExperiencesService } from './expreance.service';
-
 import type { CurrentUserType } from '../../types/currentUser';
 
 import { CreateExperienceDto, UpdateExperienceDto } from './dto/expreance.dto';
+
+import { ExperiencesService } from './expreance.service';
 
 @Controller('experiences')
 export class ExperiencesController {
@@ -46,8 +47,12 @@ export class ExperiencesController {
   )
   create(
     @CurrentUser() user: CurrentUserType,
-    @UploadedFiles() images: Express.Multer.File[],
-    @Body() createExperienceDto: CreateExperienceDto,
+
+    @Body()
+    createExperienceDto: CreateExperienceDto,
+
+    @UploadedFiles()
+    images: Express.Multer.File[],
   ) {
     return this.experiencesService.create(
       user.sub,
@@ -73,8 +78,12 @@ export class ExperiencesController {
   )
   update(
     @Param('id') id: string,
-    @UploadedFiles() images: Express.Multer.File[],
-    @Body() updateExperienceDto: UpdateExperienceDto,
+
+    @Body()
+    updateExperienceDto: UpdateExperienceDto,
+
+    @UploadedFiles()
+    images: Express.Multer.File[],
   ) {
     return this.experiencesService.update(
       id,

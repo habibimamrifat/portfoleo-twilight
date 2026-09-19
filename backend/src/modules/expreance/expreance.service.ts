@@ -2,9 +2,9 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 
 import { PrismaService } from '../../prisma/prisma.service';
 
-import { CreateExperienceDto, UpdateExperienceDto } from './dto/expreance.dto';
-
 import { CloudinaryService } from '../../helpers/cloudinary/cloudanry.service';
+
+import { CreateExperienceDto, UpdateExperienceDto } from './dto/expreance.dto';
 
 @Injectable()
 export class ExperiencesService {
@@ -18,6 +18,7 @@ export class ExperiencesService {
       where: {
         isActive: true,
       },
+
       select: {
         id: true,
         organization: true,
@@ -32,7 +33,9 @@ export class ExperiencesService {
         isCurrent: true,
         experienceLetterUrl: true,
         sortOrder: true,
+        isActive: true,
       },
+
       orderBy: [
         {
           isCurrent: 'desc',
@@ -54,6 +57,9 @@ export class ExperiencesService {
   ) {
     const { startDate, endDate, ...data } = createExperienceDto;
 
+    /*
+     * Upload all selected images to Cloudinary.
+     */
     const uploadedImages = await Promise.all(
       images.map((image) =>
         this.cloudinaryService.uploadImage(image, 'experiences'),
@@ -100,18 +106,22 @@ export class ExperiencesService {
     updateExperienceDto: UpdateExperienceDto,
     images: Express.Multer.File[],
   ) {
+    /*
+     * Get existing experience first.
+     */
     const existingExperience = await this.findOne(id);
 
     const { startDate, endDate, ...data } = updateExperienceDto;
 
+    /*
+     * Existing images remain untouched.
+     */
     let imageUrls = existingExperience.images;
 
     /*
-     * Upload newly selected images.
-     *
-     * Existing images remain untouched.
+     * If new images were selected,
+     * upload them and append them.
      */
-
     if (images.length > 0) {
       const uploadedImages = await Promise.all(
         images.map((image) =>
@@ -140,6 +150,14 @@ export class ExperiencesService {
 
         ...(endDate !== undefined && {
           endDate: endDate ? new Date(endDate) : null,
+        }),
+
+        /*
+         * If the experience is marked current,
+         * there should be no end date.
+         */
+        ...(data.isCurrent === true && {
+          endDate: null,
         }),
       },
     });

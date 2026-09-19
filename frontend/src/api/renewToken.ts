@@ -1,20 +1,22 @@
-import { getRenewToken, setAuthToken } from "./token";
+import { getRenewToken, setAuthToken, setRenewToken } from "./token";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export async function renewToken() {
-  const renewToken = getRenewToken();
+  const renewTokenValue = getRenewToken();
 
-  if (!renewToken) {
+  if (!renewTokenValue) {
     return null;
   }
 
+  console.log("renew token is being called");
+
   const response = await fetch(`${BASE_URL}/auth/renew`, {
     method: "POST",
-
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${renewToken}`,
+      Accept: "application/json",
+      Authorization: `Bearer ${renewTokenValue}`,
     },
   });
 
@@ -24,7 +26,20 @@ export async function renewToken() {
 
   const result = await response.json();
 
-  setAuthToken(result.data.authToken);
+  const authToken = result?.data?.authToken ?? result?.authToken;
+
+  const newRenewToken = result?.data?.renewToken ?? result?.renewToken;
+
+  if (!authToken || !newRenewToken) {
+    console.error("Renew response does not contain both tokens");
+
+    return null;
+  }
+
+  setAuthToken(authToken);
+  setRenewToken(newRenewToken);
+
+  console.log("tokens renewed successfully");
 
   return result;
 }

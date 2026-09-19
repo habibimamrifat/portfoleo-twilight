@@ -73,11 +73,24 @@ export default function Identity() {
 
         const result = await response.json();
 
+        console.log(
+          "Portfolio user:",
+          result,
+        );
+
+        const userData =
+          result.data ?? result;
+
         setUser({
           ...defaultUser,
-          ...result.data,
+          ...userData,
         });
-      } catch {
+      } catch (error) {
+        console.error(
+          "Failed to load portfolio user:",
+          error,
+        );
+
         setUser(defaultUser);
       }
     }
@@ -85,24 +98,26 @@ export default function Identity() {
     getUser();
   }, []);
 
-  const profileImage: string =
+  const profileImage =
     user.img || defaultUser.img!;
 
-  const name: string =
+  const name =
     user.name || defaultUser.name!;
 
-  const description: string =
+  const description =
     user.description ||
     defaultUser.description!;
 
-  const experience = calculateExperience();
+  const experience =
+    calculateExperience();
 
   return (
     <>
       <Card className="min-h-auto overflow-hidden bg-white/10">
         <div className="flex h-full flex-col justify-between p-6">
-
-          {/* Profile */}
+          {/* =====================================================
+              PROFILE
+              ===================================================== */}
           <div>
             <button
               type="button"
@@ -168,7 +183,9 @@ export default function Identity() {
               </div>
             </button>
 
-            {/* Identity */}
+            {/* ===================================================
+                IDENTITY
+                =================================================== */}
             <div className="text-center">
               <p className="mb-2 text-sm font-medium uppercase tracking-[0.25em] text-blue-400">
                 Full-Stack Developer
@@ -183,8 +200,11 @@ export default function Identity() {
               </p>
             </div>
 
-            {/* Social Links */}
+            {/* ===================================================
+                SOCIAL LINKS
+                =================================================== */}
             <div className="mt-6 flex items-center justify-center gap-3">
+              {/* GitHub */}
               {user.githubUrl && (
                 <a
                   href={user.githubUrl}
@@ -214,6 +234,7 @@ export default function Identity() {
                 </a>
               )}
 
+              {/* LinkedIn */}
               {user.linkedinUrl && (
                 <a
                   href={user.linkedinUrl}
@@ -243,6 +264,7 @@ export default function Identity() {
                 </a>
               )}
 
+              {/* YouTube */}
               {user.youtubeUrl && (
                 <a
                   href={user.youtubeUrl}
@@ -274,7 +296,9 @@ export default function Identity() {
             </div>
           </div>
 
-          {/* Experience */}
+          {/* =====================================================
+              EXPERIENCE
+              ===================================================== */}
           <div className="mt-8">
             <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
               <div className="flex items-end justify-between">
@@ -314,7 +338,9 @@ export default function Identity() {
         </div>
       </Card>
 
-      {/* Profile Popup */}
+      {/* =======================================================
+          PROFILE POPUP
+          ======================================================= */}
       <PopupCard
         isOpen={isPopupOpen}
         onClose={closePopup}

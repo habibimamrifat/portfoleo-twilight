@@ -1,10 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 
 import { PrismaService } from '../../prisma/prisma.service';
+import { CloudinaryService } from '../../helpers/cloudinary/cloudanry.service';
 
 import { CreateProjectDto, UpdateProjectDto } from './dto/project.dto';
-
-import { CloudinaryService } from '../../helpers/cloudinary/cloudanry.service';
 
 @Injectable()
 export class ProjectsService {
@@ -47,14 +46,23 @@ export class ProjectsService {
     createProjectDto: CreateProjectDto,
     images: Express.Multer.File[],
   ) {
+    /*
+     * Upload all project images to Cloudinary.
+     */
     const uploadedImages = await Promise.all(
       images.map((image) =>
         this.cloudinaryService.uploadImage(image, 'projects'),
       ),
     );
 
+    /*
+     * Extract the Cloudinary URLs.
+     */
     const imageUrls = uploadedImages.map((image) => image.url);
 
+    /*
+     * Create the project with the uploaded image URLs.
+     */
     return this.prisma.project.create({
       data: {
         ...createProjectDto,
@@ -89,10 +97,21 @@ export class ProjectsService {
     updateProjectDto: UpdateProjectDto,
     images: Express.Multer.File[],
   ) {
+    /*
+     * Make sure the project exists first.
+     */
     const existingProject = await this.findOne(id);
 
+    /*
+     * Keep the existing images by default.
+     */
     let imageUrls = existingProject.images;
 
+    /*
+     * If new images were uploaded,
+     * upload them and append them to
+     * the existing images.
+     */
     if (images.length > 0) {
       const uploadedImages = await Promise.all(
         images.map((image) =>
@@ -105,20 +124,30 @@ export class ProjectsService {
       imageUrls = [...existingProject.images, ...newImageUrls];
     }
 
+    /*
+     * Update the project.
+     */
     return this.prisma.project.update({
       where: {
         id,
       },
       data: {
         ...updateProjectDto,
+
         images: imageUrls,
       },
     });
   }
 
   async remove(id: string) {
+    /*
+     * Make sure the project exists.
+     */
     await this.findOne(id);
 
+    /*
+     * Delete the project from the database.
+     */
     await this.prisma.project.delete({
       where: {
         id,

@@ -7,6 +7,8 @@ import {
   Min,
 } from 'class-validator';
 
+import { Transform } from 'class-transformer';
+
 import { ProjectPlatform, ProjectStatus } from '@prisma/client';
 
 export class CreateProjectDto {
@@ -35,15 +37,44 @@ export class CreateProjectDto {
   approachTaken?: string;
 
   @IsOptional()
+  @Transform(({ value }) => {
+    if (value === 'true') {
+      return true;
+    }
+
+    if (value === 'false') {
+      return false;
+    }
+
+    return value;
+  })
   @IsBoolean()
   featured?: boolean;
 
   @IsOptional()
+  @Transform(({ value }) => {
+    if (value === '' || value === undefined) {
+      return value;
+    }
+
+    return Number(value);
+  })
   @IsInt()
   @Min(0)
   sortOrder?: number;
 
   @IsOptional()
+  @Transform(({ value }) => {
+    if (value === 'true') {
+      return true;
+    }
+
+    if (value === 'false') {
+      return false;
+    }
+
+    return value;
+  })
   @IsBoolean()
   isActive?: boolean;
 }
@@ -78,15 +109,44 @@ export class UpdateProjectDto {
   approachTaken?: string;
 
   @IsOptional()
+  @Transform(({ value }) => {
+    if (value === 'true') {
+      return true;
+    }
+
+    if (value === 'false') {
+      return false;
+    }
+
+    return value;
+  })
   @IsBoolean()
   featured?: boolean;
 
   @IsOptional()
+  @Transform(({ value }) => {
+    if (value === '' || value === undefined) {
+      return value;
+    }
+
+    return Number(value);
+  })
   @IsInt()
   @Min(0)
   sortOrder?: number;
 
   @IsOptional()
+  @Transform(({ value }) => {
+    if (value === 'true') {
+      return true;
+    }
+
+    if (value === 'false') {
+      return false;
+    }
+
+    return value;
+  })
   @IsBoolean()
   isActive?: boolean;
 }

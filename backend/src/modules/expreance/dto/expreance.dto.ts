@@ -8,6 +8,8 @@ import {
   Min,
 } from 'class-validator';
 
+import { Transform } from 'class-transformer';
+
 import { EmploymentType } from '@prisma/client';
 
 export class CreateExperienceDto {
@@ -39,6 +41,17 @@ export class CreateExperienceDto {
   endDate?: string;
 
   @IsOptional()
+  @Transform(({ value }) => {
+    if (value === 'true') {
+      return true;
+    }
+
+    if (value === 'false') {
+      return false;
+    }
+
+    return value;
+  })
   @IsBoolean()
   isCurrent?: boolean;
 
@@ -47,11 +60,29 @@ export class CreateExperienceDto {
   experienceLetterUrl?: string;
 
   @IsOptional()
+  @Transform(({ value }) => {
+    if (value === '' || value === undefined) {
+      return value;
+    }
+
+    return Number(value);
+  })
   @IsInt()
   @Min(0)
   sortOrder?: number;
 
   @IsOptional()
+  @Transform(({ value }) => {
+    if (value === 'true') {
+      return true;
+    }
+
+    if (value === 'false') {
+      return false;
+    }
+
+    return value;
+  })
   @IsBoolean()
   isActive?: boolean;
 }
@@ -90,6 +121,17 @@ export class UpdateExperienceDto {
   endDate?: string;
 
   @IsOptional()
+  @Transform(({ value }) => {
+    if (value === 'true') {
+      return true;
+    }
+
+    if (value === 'false') {
+      return false;
+    }
+
+    return value;
+  })
   @IsBoolean()
   isCurrent?: boolean;
 
@@ -98,11 +140,29 @@ export class UpdateExperienceDto {
   experienceLetterUrl?: string;
 
   @IsOptional()
+  @Transform(({ value }) => {
+    if (value === '' || value === undefined) {
+      return value;
+    }
+
+    return Number(value);
+  })
   @IsInt()
   @Min(0)
   sortOrder?: number;
 
   @IsOptional()
+  @Transform(({ value }) => {
+    if (value === 'true') {
+      return true;
+    }
+
+    if (value === 'false') {
+      return false;
+    }
+
+    return value;
+  })
   @IsBoolean()
   isActive?: boolean;
 }
