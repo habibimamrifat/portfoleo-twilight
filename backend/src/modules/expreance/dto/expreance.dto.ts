@@ -1,5 +1,4 @@
 import {
-  IsArray,
   IsBoolean,
   IsDateString,
   IsEnum,
@@ -28,10 +27,6 @@ export class CreateExperienceDto {
   @IsOptional()
   @IsString()
   location?: string;
-
-  @IsArray()
-  @IsString({ each: true })
-  images!: string[];
 
   @IsEnum(EmploymentType)
   employmentType!: EmploymentType;
@@ -81,11 +76,6 @@ export class UpdateExperienceDto {
   @IsOptional()
   @IsString()
   location?: string;
-
-  @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  images?: string[];
 
   @IsOptional()
   @IsEnum(EmploymentType)

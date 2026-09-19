@@ -43,7 +43,7 @@ export default function LoginPage() {
       setAuthToken(result.data.authToken);
       setRenewToken(result.data.renewToken);
 
-      router.push("/");
+      router.push("/dashboard");
     } catch {
       setError("Something went wrong. Please try again.");
     } finally {
@@ -52,8 +52,8 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-black px-4">
-      <div className="w-full max-w-md rounded-2xl border border-white/20 bg-white/10 p-8 backdrop-blur-md">
+    <main className="min-h-screen flex items-center justify-center px-4">
+      <div className="w-full max-w-md rounded-2xl border border-white/20 bg-white/0 p-8 backdrop-blur-xs">
         <h1 className="mb-2 text-3xl font-semibold text-white">
           Welcome back
         </h1>

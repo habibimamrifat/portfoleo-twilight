@@ -6,7 +6,7 @@ export default function Page() {
   const router = useRouter();
 
   return (
-    <main className="flex min-h-screen w-full items-center justify-center bg-black">
+    <main className="flex min-h-screen w-full items-center justify-center ">
       <div className="flex flex-col items-center gap-6 text-center">
         <h1 className="text-2xl font-semibold text-white">
           Welcome

@@ -1,0 +1,1080 @@
+"use client";
+
+import Image from "next/image";
+import { useEffect, useMemo, useState } from "react";
+import {
+  BookOpen,
+  Edit3,
+  FileText,
+  ImagePlus,
+  Loader2,
+  Plus,
+  Save,
+  Trash2,
+  X,
+} from "lucide-react";
+
+import Card from "@/components/common/Card";
+
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
+type BlogStatus = "DRAFT" | "PUBLISHED" | "ARCHIVED";
+
+interface Blog {
+  id: string;
+  title: string;
+  slug: string;
+  excerpt?: string | null;
+  content: string;
+  coverImage?: string | null;
+  status: BlogStatus;
+  publishedAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface BlogForm {
+  title: string;
+  slug: string;
+  excerpt: string;
+  content: string;
+  status: BlogStatus;
+  publishedAt: string;
+}
+
+const emptyForm: BlogForm = {
+  title: "",
+  slug: "",
+  excerpt: "",
+  content: "",
+  status: "DRAFT",
+  publishedAt: "",
+};
+
+export default function BlogPage() {
+  const [blogs, setBlogs] = useState<Blog[]>([]);
+  const [form, setForm] = useState<BlogForm>(emptyForm);
+
+  const [selectedImage, setSelectedImage] =
+    useState<File | null>(null);
+
+  const [imagePreview, setImagePreview] =
+    useState<string | null>(null);
+
+  const [editingId, setEditingId] = useState<string | null>(null);
+
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [deletingId, setDeletingId] =
+    useState<string | null>(null);
+
+  const [error, setError] = useState<string | null>(null);
+
+  // =========================
+  // LOAD BLOGS
+  // =========================
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadBlogs = async () => {
+      try {
+        const token = localStorage.getItem("portfolio");
+
+        const response = await fetch(
+          `${API_URL}/blog-posts/admin/all`,
+          {
+            method: "GET",
+            headers: {
+              ...(token
+                ? {
+                    Authorization: `Bearer ${token}`,
+                  }
+                : {}),
+            },
+          },
+        );
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            result?.message || "Failed to load blog posts",
+          );
+        }
+
+        const blogData: Blog[] = Array.isArray(result)
+          ? result
+          : Array.isArray(result?.data)
+            ? result.data
+            : [];
+
+        if (!cancelled) {
+          setBlogs(blogData);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError(
+            err instanceof Error
+              ? err.message
+              : "Failed to load blog posts",
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadBlogs();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // =========================
+  // STATS
+  // =========================
+
+  const stats = useMemo(() => {
+    return {
+      total: blogs.length,
+      published: blogs.filter(
+        (blog) => blog.status === "PUBLISHED",
+      ).length,
+      drafts: blogs.filter(
+        (blog) => blog.status === "DRAFT",
+      ).length,
+      archived: blogs.filter(
+        (blog) => blog.status === "ARCHIVED",
+      ).length,
+    };
+  }, [blogs]);
+
+  // =========================
+  // IMAGE SELECT
+  // =========================
+
+  const handleImageChange = (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = event.target.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    if (!file.type.startsWith("image/")) {
+      setError("Please select an image file.");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setError("Image size must be less than 5MB.");
+      return;
+    }
+
+    setError(null);
+
+    setSelectedImage(file);
+
+    const previewUrl = URL.createObjectURL(file);
+
+    setImagePreview(previewUrl);
+  };
+
+  // =========================
+  // RESET FORM
+  // =========================
+
+  const resetForm = () => {
+    setForm(emptyForm);
+    setSelectedImage(null);
+    setImagePreview(null);
+    setEditingId(null);
+    setError(null);
+  };
+
+  // =========================
+  // SLUG GENERATOR
+  // =========================
+
+  const generateSlug = () => {
+    const slug = form.title
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9\s-]/g, "")
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-");
+
+    setForm((previous) => ({
+      ...previous,
+      slug,
+    }));
+  };
+
+  // =========================
+  // EDIT
+  // =========================
+
+  const handleEdit = (blog: Blog) => {
+    setEditingId(blog.id);
+
+    setForm({
+      title: blog.title,
+      slug: blog.slug,
+      excerpt: blog.excerpt ?? "",
+      content: blog.content,
+      status: blog.status,
+      publishedAt: blog.publishedAt
+        ? new Date(blog.publishedAt)
+            .toISOString()
+            .slice(0, 16)
+        : "",
+    });
+
+    setSelectedImage(null);
+
+    setImagePreview(blog.coverImage ?? null);
+
+    setError(null);
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  };
+
+  // =========================
+  // SAVE
+  // =========================
+
+  const handleSubmit = async (
+    event: React.FormEvent<HTMLFormElement>,
+  ) => {
+    event.preventDefault();
+
+    if (!form.title.trim()) {
+      setError("Title is required.");
+      return;
+    }
+
+    if (!form.slug.trim()) {
+      setError("Slug is required.");
+      return;
+    }
+
+    if (!form.content.trim()) {
+      setError("Content is required.");
+      return;
+    }
+
+    try {
+      setSaving(true);
+      setError(null);
+
+      const token = localStorage.getItem("portfolio");
+
+      const formData = new FormData();
+
+      formData.append("title", form.title.trim());
+      formData.append("slug", form.slug.trim());
+      formData.append("excerpt", form.excerpt.trim());
+      formData.append("content", form.content);
+      formData.append("status", form.status);
+
+      if (form.publishedAt) {
+        formData.append(
+          "publishedAt",
+          new Date(form.publishedAt).toISOString(),
+        );
+      }
+
+      if (selectedImage) {
+        formData.append("coverImage", selectedImage);
+      }
+
+      const url = editingId
+        ? `${API_URL}/blog-posts/${editingId}`
+        : `${API_URL}/blog-posts`;
+
+      const method = editingId ? "PATCH" : "POST";
+
+      const response = await fetch(url, {
+        method,
+        headers: {
+          ...(token
+            ? {
+                Authorization: `Bearer ${token}`,
+              }
+            : {}),
+        },
+        body: formData,
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          result?.message ||
+            `Failed to ${
+              editingId ? "update" : "create"
+            } blog post`,
+        );
+      }
+
+      const savedBlog: Blog =
+        result?.data ?? result;
+
+      if (editingId) {
+        setBlogs((previous) =>
+          previous.map((blog) =>
+            blog.id === editingId
+              ? savedBlog
+              : blog,
+          ),
+        );
+      } else {
+        setBlogs((previous) => [
+          savedBlog,
+          ...previous,
+        ]);
+      }
+
+      resetForm();
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Something went wrong",
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // =========================
+  // DELETE
+  // =========================
+
+  const handleDelete = async (id: string) => {
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this blog post?",
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setDeletingId(id);
+      setError(null);
+
+      const token = localStorage.getItem("portfolio");
+
+      const response = await fetch(
+        `${API_URL}/blog-posts/${id}`,
+        {
+          method: "DELETE",
+          headers: {
+            ...(token
+              ? {
+                  Authorization: `Bearer ${token}`,
+                }
+              : {}),
+          },
+        },
+      );
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          result?.message ||
+            "Failed to delete blog post",
+        );
+      }
+
+      setBlogs((previous) =>
+        previous.filter((blog) => blog.id !== id),
+      );
+
+      if (editingId === id) {
+        resetForm();
+      }
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Failed to delete blog post",
+      );
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  // =========================
+  // FORMAT DATE
+  // =========================
+
+  const formatDate = (date?: string | null) => {
+    if (!date) {
+      return "Not published";
+    }
+
+    return new Date(date).toLocaleDateString(
+      "en-US",
+      {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      },
+    );
+  };
+
+  return (
+    <div className="space-y-6 pb-10">
+      {/* =========================
+          HEADER
+      ========================= */}
+
+      <div>
+        <div className="flex items-center gap-3">
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/20 bg-white/10">
+            <BookOpen
+              size={21}
+              className="text-white"
+              strokeWidth={1.7}
+            />
+          </div>
+
+          <div>
+            <h1 className="text-2xl font-semibold text-white">
+              Blog
+            </h1>
+
+            <p className="text-sm text-white/45">
+              Manage your portfolio blog posts.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* =========================
+          ERROR
+      ========================= */}
+
+      {error && (
+        <div className="flex items-center justify-between rounded-2xl border border-red-400/20 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+          <span>{error}</span>
+
+          <button
+            type="button"
+            onClick={() => setError(null)}
+            className="text-red-200/60 transition hover:text-red-200"
+          >
+            <X size={17} />
+          </button>
+        </div>
+      )}
+
+      {/* =========================
+          STATS
+      ========================= */}
+
+      <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
+        <Card className="p-5">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-white/45">
+                Total
+              </p>
+
+              <p className="mt-2 text-2xl font-semibold text-white">
+                {stats.total}
+              </p>
+            </div>
+
+            <FileText
+              size={20}
+              className="text-white/40"
+              strokeWidth={1.6}
+            />
+          </div>
+        </Card>
+
+        <Card className="p-5">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-white/45">
+                Published
+              </p>
+
+              <p className="mt-2 text-2xl font-semibold text-white">
+                {stats.published}
+              </p>
+            </div>
+
+            <BookOpen
+              size={20}
+              className="text-white/40"
+              strokeWidth={1.6}
+            />
+          </div>
+        </Card>
+
+        <Card className="p-5">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-white/45">
+                Drafts
+              </p>
+
+              <p className="mt-2 text-2xl font-semibold text-white">
+                {stats.drafts}
+              </p>
+            </div>
+
+            <Edit3
+              size={20}
+              className="text-white/40"
+              strokeWidth={1.6}
+            />
+          </div>
+        </Card>
+
+        <Card className="p-5">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-white/45">
+                Archived
+              </p>
+
+              <p className="mt-2 text-2xl font-semibold text-white">
+                {stats.archived}
+              </p>
+            </div>
+
+            <FileText
+              size={20}
+              className="text-white/40"
+              strokeWidth={1.6}
+            />
+          </div>
+        </Card>
+      </div>
+
+      {/* =========================
+          FORM
+      ========================= */}
+
+      <Card className="p-6">
+        <div className="mb-6 flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-semibold text-white">
+              {editingId
+                ? "Edit Blog Post"
+                : "Create Blog Post"}
+            </h2>
+
+            <p className="mt-1 text-sm text-white/40">
+              {editingId
+                ? "Update your blog post."
+                : "Create a new article for your portfolio."}
+            </p>
+          </div>
+
+          {editingId && (
+            <button
+              type="button"
+              onClick={resetForm}
+              className="
+                flex items-center gap-2 rounded-xl border
+                border-white/10 bg-white/5 px-3 py-2
+                text-sm text-white/60 transition
+                hover:bg-white/10 hover:text-white
+              "
+            >
+              <X size={16} />
+              Cancel
+            </button>
+          )}
+        </div>
+
+        <form
+          onSubmit={handleSubmit}
+          className="space-y-5"
+        >
+          {/* TITLE + SLUG */}
+
+          <div className="grid gap-5 lg:grid-cols-2">
+            <div>
+              <label className="mb-2 block text-sm text-white/60">
+                Title
+              </label>
+
+              <input
+                type="text"
+                value={form.title}
+                onChange={(event) =>
+                  setForm((previous) => ({
+                    ...previous,
+                    title: event.target.value,
+                  }))
+                }
+                placeholder="Enter blog title"
+                className="
+                  h-11 w-full rounded-xl border
+                  border-white/10 bg-white/5 px-4
+                  text-sm text-white outline-none
+                  placeholder:text-white/25
+                  focus:border-white/25
+                "
+              />
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm text-white/60">
+                Slug
+              </label>
+
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={form.slug}
+                  onChange={(event) =>
+                    setForm((previous) => ({
+                      ...previous,
+                      slug: event.target.value,
+                    }))
+                  }
+                  placeholder="blog-post-slug"
+                  className="
+                    h-11 min-w-0 flex-1 rounded-xl border
+                    border-white/10 bg-white/5 px-4
+                    text-sm text-white outline-none
+                    placeholder:text-white/25
+                    focus:border-white/25
+                  "
+                />
+
+                <button
+                  type="button"
+                  onClick={generateSlug}
+                  className="
+                    rounded-xl border border-white/10
+                    bg-white/5 px-4 text-sm text-white/60
+                    transition hover:bg-white/10 hover:text-white
+                  "
+                >
+                  Generate
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* EXCERPT */}
+
+          <div>
+            <label className="mb-2 block text-sm text-white/60">
+              Excerpt
+            </label>
+
+            <textarea
+              value={form.excerpt}
+              onChange={(event) =>
+                setForm((previous) => ({
+                  ...previous,
+                  excerpt: event.target.value,
+                }))
+              }
+              rows={3}
+              placeholder="Short description of the article..."
+              className="
+                w-full resize-none rounded-xl border
+                border-white/10 bg-white/5 px-4 py-3
+                text-sm text-white outline-none
+                placeholder:text-white/25
+                focus:border-white/25
+              "
+            />
+          </div>
+
+          {/* CONTENT */}
+
+          <div>
+            <label className="mb-2 block text-sm text-white/60">
+              Content
+            </label>
+
+            <textarea
+              value={form.content}
+              onChange={(event) =>
+                setForm((previous) => ({
+                  ...previous,
+                  content: event.target.value,
+                }))
+              }
+              rows={12}
+              placeholder="Write your blog content..."
+              className="
+                w-full resize-y rounded-xl border
+                border-white/10 bg-white/5 px-4 py-3
+                text-sm leading-6 text-white outline-none
+                placeholder:text-white/25
+                focus:border-white/25
+              "
+            />
+          </div>
+
+          {/* IMAGE */}
+
+          <div>
+            <label className="mb-2 block text-sm text-white/60">
+              Cover Image
+            </label>
+
+            <div className="grid gap-4 lg:grid-cols-[1fr_240px]">
+              <label
+                className="
+                  flex min-h-32 cursor-pointer flex-col
+                  items-center justify-center rounded-2xl
+                  border border-dashed border-white/15
+                  bg-white/5 px-5 py-6 text-center
+                  transition hover:border-white/25
+                  hover:bg-white/10
+                "
+              >
+                <ImagePlus
+                  size={28}
+                  className="mb-3 text-white/40"
+                  strokeWidth={1.5}
+                />
+
+                <span className="text-sm text-white/70">
+                  {selectedImage
+                    ? selectedImage.name
+                    : "Choose cover image"}
+                </span>
+
+                <span className="mt-1 text-xs text-white/30">
+                  PNG, JPG, WEBP · Max 5MB
+                </span>
+
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="hidden"
+                />
+              </label>
+
+              {imagePreview ? (
+                <div className="relative h-32 overflow-hidden rounded-2xl border border-white/10 bg-white/5">
+                  <Image
+                    src={imagePreview}
+                    alt="Cover preview"
+                    fill
+                    unoptimized
+                    className="object-cover"
+                    sizes="240px"
+                  />
+                </div>
+              ) : (
+                <div className="flex h-32 items-center justify-center rounded-2xl border border-white/10 bg-white/5">
+                  <span className="text-xs text-white/25">
+                    No image selected
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* STATUS + DATE */}
+
+          <div className="grid gap-5 lg:grid-cols-2">
+            <div>
+              <label className="mb-2 block text-sm text-white/60">
+                Status
+              </label>
+
+              <select
+                value={form.status}
+                onChange={(event) =>
+                  setForm((previous) => ({
+                    ...previous,
+                    status:
+                      event.target.value as BlogStatus,
+                  }))
+                }
+                className="
+                  h-11 w-full rounded-xl border
+                  border-white/10 bg-white/5 px-4
+                  text-sm text-white outline-none
+                  focus:border-white/25
+                "
+              >
+                <option
+                  value="DRAFT"
+                  className="bg-black"
+                >
+                  Draft
+                </option>
+
+                <option
+                  value="PUBLISHED"
+                  className="bg-black"
+                >
+                  Published
+                </option>
+
+                <option
+                  value="ARCHIVED"
+                  className="bg-black"
+                >
+                  Archived
+                </option>
+              </select>
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm text-white/60">
+                Published At
+              </label>
+
+              <input
+                type="datetime-local"
+                value={form.publishedAt}
+                onChange={(event) =>
+                  setForm((previous) => ({
+                    ...previous,
+                    publishedAt: event.target.value,
+                  }))
+                }
+                className="
+                  h-11 w-full rounded-xl border
+                  border-white/10 bg-white/5 px-4
+                  text-sm text-white outline-none
+                  focus:border-white/25
+                "
+              />
+            </div>
+          </div>
+
+          {/* SUBMIT */}
+
+          <div className="flex justify-end pt-2">
+            <button
+              type="submit"
+              disabled={saving}
+              className="
+                flex items-center gap-2 rounded-xl
+                border border-white/20 bg-white/10
+                px-5 py-2.5 text-sm font-medium
+                text-white transition
+                hover:bg-white/15
+                disabled:cursor-not-allowed
+                disabled:opacity-50
+              "
+            >
+              {saving ? (
+                <Loader2
+                  size={17}
+                  className="animate-spin"
+                />
+              ) : editingId ? (
+                <Save size={17} />
+              ) : (
+                <Plus size={17} />
+              )}
+
+              {saving
+                ? "Saving..."
+                : editingId
+                  ? "Update Post"
+                  : "Create Post"}
+            </button>
+          </div>
+        </form>
+      </Card>
+
+      {/* =========================
+          BLOG LIST
+      ========================= */}
+
+      <Card className="p-6">
+        <div className="mb-5">
+          <h2 className="text-lg font-semibold text-white">
+            Blog Posts
+          </h2>
+
+          <p className="mt-1 text-sm text-white/40">
+            All posts including drafts and archived articles.
+          </p>
+        </div>
+
+        {loading ? (
+          <div className="flex min-h-40 items-center justify-center">
+            <Loader2
+              size={24}
+              className="animate-spin text-white/50"
+            />
+          </div>
+        ) : blogs.length === 0 ? (
+          <div className="flex min-h-40 flex-col items-center justify-center text-center">
+            <BookOpen
+              size={30}
+              className="mb-3 text-white/20"
+              strokeWidth={1.5}
+            />
+
+            <p className="text-sm text-white/50">
+              No blog posts yet.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {blogs.map((blog) => (
+              <div
+                key={blog.id}
+                className="
+                  flex flex-col gap-4 rounded-2xl
+                  border border-white/10 bg-white/5
+                  p-4 transition
+                  hover:border-white/15
+                  lg:flex-row lg:items-center
+                "
+              >
+                {/* IMAGE */}
+
+                <div className="relative h-24 w-full shrink-0 overflow-hidden rounded-xl border border-white/10 bg-white/5 lg:w-36">
+                  {blog.coverImage ? (
+                    <Image
+                      src={blog.coverImage}
+                      alt={blog.title}
+                      fill
+                      unoptimized
+                      className="object-cover"
+                      sizes="144px"
+                    />
+                  ) : (
+                    <div className="flex h-full items-center justify-center">
+                      <ImagePlus
+                        size={22}
+                        className="text-white/20"
+                        strokeWidth={1.5}
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {/* CONTENT */}
+
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3 className="truncate font-medium text-white">
+                      {blog.title}
+                    </h3>
+
+                    <span
+                      className={`
+                        rounded-full border px-2.5 py-1
+                        text-[11px]
+                        ${
+                          blog.status === "PUBLISHED"
+                            ? "border-emerald-400/20 bg-emerald-400/10 text-emerald-300"
+                            : blog.status === "ARCHIVED"
+                              ? "border-orange-400/20 bg-orange-400/10 text-orange-300"
+                              : "border-white/10 bg-white/5 text-white/50"
+                        }
+                      `}
+                    >
+                      {blog.status}
+                    </span>
+                  </div>
+
+                  <p className="mt-1 text-xs text-white/30">
+                    /{blog.slug}
+                  </p>
+
+                  {blog.excerpt && (
+                    <p className="mt-2 line-clamp-2 text-sm text-white/45">
+                      {blog.excerpt}
+                    </p>
+                  )}
+
+                  <p className="mt-2 text-xs text-white/30">
+                    {blog.status === "PUBLISHED"
+                      ? `Published ${formatDate(
+                          blog.publishedAt,
+                        )}`
+                      : `Created ${formatDate(
+                          blog.createdAt,
+                        )}`}
+                  </p>
+                </div>
+
+                {/* ACTIONS */}
+
+                <div className="flex shrink-0 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleEdit(blog)}
+                    className="
+                      flex h-10 w-10 items-center
+                      justify-center rounded-xl
+                      border border-white/10
+                      bg-white/5 text-white/50
+                      transition hover:bg-white/10
+                      hover:text-white
+                    "
+                    title="Edit"
+                  >
+                    <Edit3
+                      size={16}
+                      strokeWidth={1.6}
+                    />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleDelete(blog.id)
+                    }
+                    disabled={deletingId === blog.id}
+                    className="
+                      flex h-10 w-10 items-center
+                      justify-center rounded-xl
+                      border border-red-400/10
+                      bg-red-500/5 text-red-300/60
+                      transition hover:bg-red-500/10
+                      hover:text-red-300
+                      disabled:cursor-not-allowed
+                      disabled:opacity-50
+                    "
+                    title="Delete"
+                  >
+                    {deletingId === blog.id ? (
+                      <Loader2
+                        size={16}
+                        className="animate-spin"
+                      />
+                    ) : (
+                      <Trash2
+                        size={16}
+                        strokeWidth={1.6}
+                      />
+                    )}
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
+    </div>
+  );
+}

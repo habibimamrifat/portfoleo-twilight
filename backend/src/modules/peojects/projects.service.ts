@@ -4,9 +4,14 @@ import { PrismaService } from '../../prisma/prisma.service';
 
 import { CreateProjectDto, UpdateProjectDto } from './dto/project.dto';
 
+import { CloudinaryService } from '../../helpers/cloudinary/cloudanry.service';
+
 @Injectable()
 export class ProjectsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly cloudinaryService: CloudinaryService,
+  ) {}
 
   async findAll() {
     return this.prisma.project.findMany({
@@ -37,10 +42,24 @@ export class ProjectsService {
     });
   }
 
-  async create(userId: string, createProjectDto: CreateProjectDto) {
+  async create(
+    userId: string,
+    createProjectDto: CreateProjectDto,
+    images: Express.Multer.File[],
+  ) {
+    const uploadedImages = await Promise.all(
+      images.map((image) =>
+        this.cloudinaryService.uploadImage(image, 'projects'),
+      ),
+    );
+
+    const imageUrls = uploadedImages.map((image) => image.url);
+
     return this.prisma.project.create({
       data: {
         ...createProjectDto,
+
+        images: imageUrls,
 
         user: {
           connect: {
@@ -65,8 +84,26 @@ export class ProjectsService {
     return project;
   }
 
-  async update(id: string, updateProjectDto: UpdateProjectDto) {
-    await this.findOne(id);
+  async update(
+    id: string,
+    updateProjectDto: UpdateProjectDto,
+    images: Express.Multer.File[],
+  ) {
+    const existingProject = await this.findOne(id);
+
+    let imageUrls = existingProject.images;
+
+    if (images.length > 0) {
+      const uploadedImages = await Promise.all(
+        images.map((image) =>
+          this.cloudinaryService.uploadImage(image, 'projects'),
+        ),
+      );
+
+      const newImageUrls = uploadedImages.map((image) => image.url);
+
+      imageUrls = [...existingProject.images, ...newImageUrls];
+    }
 
     return this.prisma.project.update({
       where: {
@@ -74,6 +111,7 @@ export class ProjectsService {
       },
       data: {
         ...updateProjectDto,
+        images: imageUrls,
       },
     });
   }

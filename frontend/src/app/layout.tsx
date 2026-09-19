@@ -29,8 +29,17 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} antialiased`}
     >
-      <ParticleBackground/>
-      <body>{children}</body>
+      <body className="relative min-h-screen overflow-hidden">
+        {/* Global background */}
+        <div className="pointer-events-none fixed inset-0 z-0">
+          <ParticleBackground />
+        </div>
+
+        {/* Page content */}
+        <div className="relative z-10 min-h-screen">
+          {children}
+        </div>
+      </body>
     </html>
   );
 }

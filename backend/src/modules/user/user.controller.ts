@@ -6,11 +6,17 @@ import {
   Param,
   Patch,
   Post,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
+
+import { FileInterceptor } from '@nestjs/platform-express';
+import { memoryStorage } from 'multer';
 
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+
 import { ResponseMessage } from '../../decorators/response-message.decorator';
 import { RouteFor, routeTypeObj } from '../../decorators/route.decorator';
 
@@ -48,9 +54,30 @@ export class UserController {
 
   @Patch(':id')
   @RouteFor(routeTypeObj.ADMIN)
+  @UseInterceptors(
+    FileInterceptor('img', {
+      storage: memoryStorage(),
+
+      limits: {
+        fileSize: 5 * 1024 * 1024,
+      },
+
+      fileFilter: (_req, file, callback) => {
+        if (!file.mimetype.startsWith('image/')) {
+          return callback(new Error('Only image files are allowed'), false);
+        }
+
+        callback(null, true);
+      },
+    }),
+  )
   @ResponseMessage('User updated successfully')
-  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    return this.userService.update(id, updateUserDto);
+  update(
+    @Param('id') id: string,
+    @Body() updateUserDto: UpdateUserDto,
+    @UploadedFile() file?: Express.Multer.File,
+  ) {
+    return this.userService.update(id, updateUserDto, file);
   }
 
   @Delete(':id')

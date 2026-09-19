@@ -45,4 +45,8 @@ export class CreateUserDto {
   @IsOptional()
   @IsUrl()
   resumeUrl?: string;
+
+  @IsOptional()
+  @IsUrl()
+  youtubeUrl?: string;
 }

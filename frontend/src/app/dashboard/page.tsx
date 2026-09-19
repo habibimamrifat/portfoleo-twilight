@@ -1,9 +1,15 @@
-import React from 'react'
+import Card from "@/components/common/Card";
 
-export default function page() {
+export default function DashboardPage() {
   return (
-    <div>
-      i am the dashboard
-    </div>
-  )
+    <Card className="min-h-full p-8">
+      <h1 className="text-2xl font-semibold text-white">
+        Dashboard
+      </h1>
+
+      <p className="mt-2 text-sm text-white/50">
+        Manage your portfolio from here.
+      </p>
+    </Card>
+  );
 }

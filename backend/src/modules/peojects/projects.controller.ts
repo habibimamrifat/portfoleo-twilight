@@ -6,7 +6,12 @@ import {
   Param,
   Patch,
   Post,
+  UploadedFiles,
+  UseInterceptors,
 } from '@nestjs/common';
+
+import { FilesInterceptor } from '@nestjs/platform-express';
+import { memoryStorage } from 'multer';
 
 import { CreateProjectDto, UpdateProjectDto } from './dto/project.dto';
 
@@ -14,6 +19,7 @@ import { CurrentUser } from '../../decorators/current-user.decorator';
 import { ProjectsService } from './projects.service';
 import { RouteFor, routeTypeObj } from '../../decorators/route.decorator';
 import { ResponseMessage } from '../../decorators/response-message.decorator';
+
 import type { CurrentUserType } from '../../types/currentUser';
 
 @Controller('projects')
@@ -30,11 +36,21 @@ export class ProjectsController {
   @Post()
   @RouteFor(routeTypeObj.ADMIN)
   @ResponseMessage('Project created successfully')
+  @UseInterceptors(
+    FilesInterceptor('images', 10, {
+      storage: memoryStorage(),
+    }),
+  )
   create(
     @CurrentUser() user: CurrentUserType,
+    @UploadedFiles() images: Express.Multer.File[],
     @Body() createProjectDto: CreateProjectDto,
   ) {
-    return this.projectsService.create(user.sub, createProjectDto);
+    return this.projectsService.create(
+      user.sub,
+      createProjectDto,
+      images ?? [],
+    );
   }
 
   @Get(':id')
@@ -47,8 +63,17 @@ export class ProjectsController {
   @Patch(':id')
   @RouteFor(routeTypeObj.ADMIN)
   @ResponseMessage('Project updated successfully')
-  update(@Param('id') id: string, @Body() updateProjectDto: UpdateProjectDto) {
-    return this.projectsService.update(id, updateProjectDto);
+  @UseInterceptors(
+    FilesInterceptor('images', 10, {
+      storage: memoryStorage(),
+    }),
+  )
+  update(
+    @Param('id') id: string,
+    @UploadedFiles() images: Express.Multer.File[],
+    @Body() updateProjectDto: UpdateProjectDto,
+  ) {
+    return this.projectsService.update(id, updateProjectDto, images ?? []);
   }
 
   @Delete(':id')

@@ -1,5 +1,4 @@
 import {
-  IsArray,
   IsBoolean,
   IsEnum,
   IsInt,
@@ -16,10 +15,6 @@ export class CreateProjectDto {
 
   @IsString()
   description!: string;
-
-  @IsArray()
-  @IsString({ each: true })
-  images!: string[];
 
   @IsOptional()
   @IsString()
@@ -61,11 +56,6 @@ export class UpdateProjectDto {
   @IsOptional()
   @IsString()
   description?: string;
-
-  @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  images?: string[];
 
   @IsOptional()
   @IsString()

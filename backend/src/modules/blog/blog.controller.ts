@@ -6,14 +6,19 @@ import {
   Param,
   Patch,
   Post,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
 
+import { FileInterceptor } from '@nestjs/platform-express';
+import { memoryStorage } from 'multer';
+
 import { BlogService } from './blog.service';
+
 import { RouteFor, routeTypeObj } from '../../decorators/route.decorator';
 import { CurrentUser } from '../../decorators/current-user.decorator';
+
 import { CreateBlogDto, UpdateBlogDto } from './dto/blog.dto';
-
-
 
 @Controller('blog-posts')
 export class BlogController {
@@ -45,12 +50,28 @@ export class BlogController {
 
   @Post()
   @RouteFor(routeTypeObj.ADMIN)
+  @UseInterceptors(
+    FileInterceptor('coverImage', {
+      storage: memoryStorage(),
+      limits: {
+        fileSize: 5 * 1024 * 1024,
+      },
+      fileFilter: (_req, file, callback) => {
+        if (!file.mimetype.startsWith('image/')) {
+          return callback(new Error('Only image files are allowed'), false);
+        }
+
+        callback(null, true);
+      },
+    }),
+  )
   async create(
     @CurrentUser() user: { sub: string },
     @Body() dto: CreateBlogDto,
+    @UploadedFile() coverImage?: Express.Multer.File,
   ) {
     return {
-      data: await this.blogService.create(user.sub, dto),
+      data: await this.blogService.create(user.sub, dto, coverImage),
     };
   }
 
@@ -72,9 +93,28 @@ export class BlogController {
 
   @Patch(':id')
   @RouteFor(routeTypeObj.ADMIN)
-  async update(@Param('id') id: string, @Body() dto: UpdateBlogDto) {
+  @UseInterceptors(
+    FileInterceptor('coverImage', {
+      storage: memoryStorage(),
+      limits: {
+        fileSize: 5 * 1024 * 1024,
+      },
+      fileFilter: (_req, file, callback) => {
+        if (!file.mimetype.startsWith('image/')) {
+          return callback(new Error('Only image files are allowed'), false);
+        }
+
+        callback(null, true);
+      },
+    }),
+  )
+  async update(
+    @Param('id') id: string,
+    @Body() dto: UpdateBlogDto,
+    @UploadedFile() coverImage?: Express.Multer.File,
+  ) {
     return {
-      data: await this.blogService.update(id, dto),
+      data: await this.blogService.update(id, dto, coverImage),
     };
   }
 

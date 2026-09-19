@@ -1,5 +1,4 @@
 import Navbar from "@/components/Navigation";
-import ParticleBackground from "@/components/backgrounds/ParticleBackground";
 import Container from "@/components/containers/Container";
 import Identity from "@/components/Identity";
 import TopNavigation from "@/components/common/TopNavigation";
@@ -14,9 +13,6 @@ export default function PortfolioLayout({
   return (
     <div className="relative h-screen w-screen overflow-hidden">
       <AppProvider>
-        {/* Background */}
-        <ParticleBackground />
-
         {/* Mobile Top Navigation */}
         <div className="relative z-50 xl:hidden">
           <TopNavigation />
@@ -38,7 +34,13 @@ export default function PortfolioLayout({
             {/* MAIN CONTENT */}
             <main
               id="main-content"
-              className="mt-5 col-span-12 h-full overflow-y-auto xl:col-span-8"
+              className="
+                mt-5
+                col-span-12
+                h-full
+                overflow-y-auto
+                xl:col-span-8
+              "
             >
               {children}
             </main>

@@ -4,15 +4,17 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
-
 import { PrismaService } from '../../prisma/prisma.service';
-
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { CloudinaryService } from '../../helpers/cloudinary/cloudanry.service';
 
 @Injectable()
 export class UserService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly cloudinaryService: CloudinaryService,
+  ) {}
 
   async create(createUserDto: CreateUserDto) {
     const existingUser = await this.prisma.user.findUnique({
@@ -128,13 +130,6 @@ export class UserService {
           orderBy: {
             sortOrder: 'asc',
           },
-          include: {
-            testimonials: {
-              where: {
-                isApproved: true,
-              },
-            },
-          },
         },
 
         processSteps: {
@@ -164,15 +159,6 @@ export class UserService {
           },
         },
 
-        testimonials: {
-          where: {
-            isApproved: true,
-          },
-          orderBy: {
-            createdAt: 'desc',
-          },
-        },
-
         blogPosts: {
           where: {
             status: 'PUBLISHED',
@@ -191,7 +177,11 @@ export class UserService {
     return user;
   }
 
-  async update(id: string, updateUserDto: UpdateUserDto) {
+  async update(
+    id: string,
+    updateUserDto: UpdateUserDto,
+    file?: Express.Multer.File,
+  ) {
     const existingUser = await this.prisma.user.findUnique({
       where: {
         id,
@@ -239,10 +229,6 @@ export class UserService {
       data.passwordHash = await bcrypt.hash(updateUserDto.password, 12);
     }
 
-    if (updateUserDto.img !== undefined) {
-      data.img = updateUserDto.img;
-    }
-
     if (updateUserDto.phone !== undefined) {
       data.phone = updateUserDto.phone;
     }
@@ -267,13 +253,27 @@ export class UserService {
       data.resumeUrl = updateUserDto.resumeUrl;
     }
 
-    return this.prisma.user.update({
+    /*
+     * Upload new profile image to Cloudinary
+     */
+    if (file) {
+      const uploadedImage = await this.cloudinaryService.uploadImage(
+        file,
+        'portfolio/profile',
+      );
+
+      data.img = uploadedImage.url;
+    }
+
+    const updatedUser = await this.prisma.user.update({
       where: {
         id,
       },
       data,
       select: this.publicUserSelect(),
     });
+
+    return updatedUser;
   }
 
   async remove(id: string) {

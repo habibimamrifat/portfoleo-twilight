@@ -1,11 +1,17 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 
 import { PrismaService } from '../../prisma/prisma.service';
+
 import { CreateExperienceDto, UpdateExperienceDto } from './dto/expreance.dto';
+
+import { CloudinaryService } from '../../helpers/cloudinary/cloudanry.service';
 
 @Injectable()
 export class ExperiencesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly cloudinaryService: CloudinaryService,
+  ) {}
 
   async findAll() {
     return this.prisma.experience.findMany({
@@ -41,12 +47,26 @@ export class ExperiencesService {
     });
   }
 
-  async create(userId: string, createExperienceDto: CreateExperienceDto) {
+  async create(
+    userId: string,
+    createExperienceDto: CreateExperienceDto,
+    images: Express.Multer.File[],
+  ) {
     const { startDate, endDate, ...data } = createExperienceDto;
+
+    const uploadedImages = await Promise.all(
+      images.map((image) =>
+        this.cloudinaryService.uploadImage(image, 'experiences'),
+      ),
+    );
+
+    const imageUrls = uploadedImages.map((image) => image.url);
 
     return this.prisma.experience.create({
       data: {
         ...data,
+
+        images: imageUrls,
 
         startDate: new Date(startDate),
 
@@ -75,17 +95,44 @@ export class ExperiencesService {
     return experience;
   }
 
-  async update(id: string, updateExperienceDto: UpdateExperienceDto) {
-    await this.findOne(id);
+  async update(
+    id: string,
+    updateExperienceDto: UpdateExperienceDto,
+    images: Express.Multer.File[],
+  ) {
+    const existingExperience = await this.findOne(id);
 
     const { startDate, endDate, ...data } = updateExperienceDto;
+
+    let imageUrls = existingExperience.images;
+
+    /*
+     * Upload newly selected images.
+     *
+     * Existing images remain untouched.
+     */
+
+    if (images.length > 0) {
+      const uploadedImages = await Promise.all(
+        images.map((image) =>
+          this.cloudinaryService.uploadImage(image, 'experiences'),
+        ),
+      );
+
+      const newImageUrls = uploadedImages.map((image) => image.url);
+
+      imageUrls = [...existingExperience.images, ...newImageUrls];
+    }
 
     return this.prisma.experience.update({
       where: {
         id,
       },
+
       data: {
         ...data,
+
+        images: imageUrls,
 
         ...(startDate !== undefined && {
           startDate: new Date(startDate),

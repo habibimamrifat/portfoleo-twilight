@@ -6,15 +6,23 @@ import {
   Param,
   Patch,
   Post,
+  UploadedFiles,
+  UseInterceptors,
 } from '@nestjs/common';
+
+import { FilesInterceptor } from '@nestjs/platform-express';
+import { memoryStorage } from 'multer';
 
 import { RouteFor, routeTypeObj } from '../../decorators/route.decorator';
 
 import { ResponseMessage } from '../../decorators/response-message.decorator';
 
 import { CurrentUser } from '../../decorators/current-user.decorator';
+
 import { ExperiencesService } from './expreance.service';
+
 import type { CurrentUserType } from '../../types/currentUser';
+
 import { CreateExperienceDto, UpdateExperienceDto } from './dto/expreance.dto';
 
 @Controller('experiences')
@@ -31,11 +39,21 @@ export class ExperiencesController {
   @Post()
   @RouteFor(routeTypeObj.ADMIN)
   @ResponseMessage('Experience created successfully')
+  @UseInterceptors(
+    FilesInterceptor('images', 10, {
+      storage: memoryStorage(),
+    }),
+  )
   create(
     @CurrentUser() user: CurrentUserType,
+    @UploadedFiles() images: Express.Multer.File[],
     @Body() createExperienceDto: CreateExperienceDto,
   ) {
-    return this.experiencesService.create(user.sub, createExperienceDto);
+    return this.experiencesService.create(
+      user.sub,
+      createExperienceDto,
+      images ?? [],
+    );
   }
 
   @Get(':id')
@@ -48,11 +66,21 @@ export class ExperiencesController {
   @Patch(':id')
   @RouteFor(routeTypeObj.ADMIN)
   @ResponseMessage('Experience updated successfully')
+  @UseInterceptors(
+    FilesInterceptor('images', 10, {
+      storage: memoryStorage(),
+    }),
+  )
   update(
     @Param('id') id: string,
+    @UploadedFiles() images: Express.Multer.File[],
     @Body() updateExperienceDto: UpdateExperienceDto,
   ) {
-    return this.experiencesService.update(id, updateExperienceDto);
+    return this.experiencesService.update(
+      id,
+      updateExperienceDto,
+      images ?? [],
+    );
   }
 
   @Delete(':id')

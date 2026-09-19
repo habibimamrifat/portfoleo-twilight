@@ -17,6 +17,7 @@ import { ExperiencesModule } from './modules/expreance/expreance.module';
 import { ToolsModule } from './modules/tools/tools.module';
 import { BlogModule } from './modules/blog/blog.module';
 import { BlogCommentsModule } from './modules/blog-comments/blog-comments.module';
+import { CloudinaryModule } from './helpers/cloudinary/cloudinary.module';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { BlogCommentsModule } from './modules/blog-comments/blog-comments.module
     ToolsModule,
     BlogModule,
     BlogCommentsModule,
+    CloudinaryModule,
   ],
   controllers: [AppController],
   providers: [AppService],

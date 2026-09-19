@@ -7,11 +7,17 @@ import {
 import { BlogStatus, Prisma } from '@prisma/client';
 
 import { PrismaService } from '../../prisma/prisma.service';
+
+import { CloudinaryService } from '../../helpers/cloudinary/cloudanry.service';
+
 import { CreateBlogDto, UpdateBlogDto } from './dto/blog.dto';
 
 @Injectable()
 export class BlogService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly cloudinaryService: CloudinaryService,
+  ) {}
 
   // =========================
   // PUBLIC
@@ -72,7 +78,11 @@ export class BlogService {
   // ADMIN
   // =========================
 
-  async create(userId: string, dto: CreateBlogDto) {
+  async create(
+    userId: string,
+    dto: CreateBlogDto,
+    coverImage?: Express.Multer.File,
+  ) {
     const existingBlog = await this.prisma.blogPost.findUnique({
       where: {
         slug: dto.slug,
@@ -83,6 +93,25 @@ export class BlogService {
       throw new ConflictException('A blog post with this slug already exists');
     }
 
+    // =========================
+    // UPLOAD COVER IMAGE
+    // =========================
+
+    let coverImageUrl: string | undefined;
+
+    if (coverImage) {
+      const result = await this.cloudinaryService.uploadImage(
+        coverImage,
+        'blog-posts',
+      );
+
+      coverImageUrl = result.url;
+    }
+
+    // =========================
+    // PUBLISHED DATE
+    // =========================
+
     let publishedAt: Date | undefined;
 
     if (dto.status === BlogStatus.PUBLISHED) {
@@ -90,6 +119,10 @@ export class BlogService {
     } else if (dto.publishedAt) {
       publishedAt = new Date(dto.publishedAt);
     }
+
+    // =========================
+    // CREATE
+    // =========================
 
     return this.prisma.blogPost.create({
       data: {
@@ -99,7 +132,8 @@ export class BlogService {
         slug: dto.slug,
         excerpt: dto.excerpt,
         content: dto.content,
-        coverImage: dto.coverImage,
+
+        coverImage: coverImageUrl,
 
         status: dto.status ?? BlogStatus.DRAFT,
 
@@ -130,7 +164,11 @@ export class BlogService {
     return blog;
   }
 
-  async update(id: string, dto: UpdateBlogDto) {
+  async update(
+    id: string,
+    dto: UpdateBlogDto,
+    coverImage?: Express.Multer.File,
+  ) {
     const existingBlog = await this.prisma.blogPost.findUnique({
       where: {
         id,
@@ -160,13 +198,27 @@ export class BlogService {
     }
 
     // =========================
+    // UPLOAD NEW COVER IMAGE
+    // =========================
+
+    let coverImageUrl: string | undefined;
+
+    if (coverImage) {
+      const result = await this.cloudinaryService.uploadImage(
+        coverImage,
+        'blog-posts',
+      );
+
+      coverImageUrl = result.url;
+    }
+
+    // =========================
     // PUBLISHED DATE
     // =========================
 
     let publishedAt: Date | null | undefined;
 
     if (dto.status === BlogStatus.PUBLISHED) {
-      // Publishing the blog
       publishedAt =
         dto.publishedAt !== undefined
           ? new Date(dto.publishedAt)
@@ -175,10 +227,8 @@ export class BlogService {
       dto.status === BlogStatus.DRAFT ||
       dto.status === BlogStatus.ARCHIVED
     ) {
-      // Moving published blog back to draft/archive
       publishedAt = null;
     } else if (dto.publishedAt !== undefined) {
-      // Only changing published date
       publishedAt = new Date(dto.publishedAt);
     }
 
@@ -191,13 +241,20 @@ export class BlogService {
       slug: dto.slug,
       excerpt: dto.excerpt,
       content: dto.content,
-      coverImage: dto.coverImage,
       status: dto.status,
     };
+
+    if (coverImageUrl !== undefined) {
+      data.coverImage = coverImageUrl;
+    }
 
     if (publishedAt !== undefined) {
       data.publishedAt = publishedAt;
     }
+
+    // =========================
+    // UPDATE
+    // =========================
 
     return this.prisma.blogPost.update({
       where: {

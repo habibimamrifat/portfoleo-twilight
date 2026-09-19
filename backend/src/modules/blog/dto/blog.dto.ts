@@ -17,10 +17,6 @@ export class CreateBlogDto {
   content!: string;
 
   @IsOptional()
-  @IsString()
-  coverImage?: string;
-
-  @IsOptional()
   @IsEnum(BlogStatus)
   status?: BlogStatus;
 
@@ -45,10 +41,6 @@ export class UpdateBlogDto {
   @IsOptional()
   @IsString()
   content?: string;
-
-  @IsOptional()
-  @IsString()
-  coverImage?: string;
 
   @IsOptional()
   @IsEnum(BlogStatus)
