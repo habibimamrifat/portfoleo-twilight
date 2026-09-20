@@ -21,9 +21,11 @@ import { JwtCustomModule } from './helpers/jwt/jwtCustom.module';
 import { APP_GUARD } from '@nestjs/core';
 import { RouteGuard } from './guard/route.guard';
 import { AuthGuard } from './guard/auth.guard';
+import { ContactModule } from './modules/contact/contact.module';
 
 @Module({
   imports: [
+    ContactModule,
     SystemModule,
     AuthModule,
     UserModule,

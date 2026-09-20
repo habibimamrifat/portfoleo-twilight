@@ -17,11 +17,11 @@ import {
 } from "lucide-react";
 
 const navigation = [
-  {
-    name: "Dashboard",
-    href: "/dashboard",
-    icon: LayoutDashboard,
-  },
+  // {
+  //   name: "Dashboard",
+  //   href: "/dashboard",
+  //   icon: LayoutDashboard,
+  // },
   {
     name: "Profile",
     href: "/dashboard/profile",
@@ -58,20 +58,11 @@ const navigation = [
     icon: Layers3,
   },
   {
-    name: "Learning",
-    href: "/dashboard/learning",
-    icon: GraduationCap,
-  },
-  {
     name: "Blog",
     href: "/dashboard/blog",
     icon: BookOpen,
   },
-  {
-    name: "Comments",
-    href: "/dashboard/comments",
-    icon: MessageSquare,
-  },
+
 ];
 
 export default function DashboardLayout({
