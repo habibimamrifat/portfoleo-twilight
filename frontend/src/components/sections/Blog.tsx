@@ -1,31 +1,89 @@
+
 "use client";
 
 import Link from "next/link";
-import Card from "../common/Card";
-import { ArrowUpRight } from "lucide-react";
+import Image from "next/image";
+import { useEffect, useState } from "react";
+import { ArrowUpRight, ImagePlus } from "lucide-react";
 
-const posts = [
-  {
-    title: "What I Learned Building Scalable Backends",
-    excerpt:
-      "Lessons from working with APIs, databases, modular architecture and backend systems.",
-    date: "September 2026",
-  },
-  {
-    title: "From Full-Stack Development to System Design",
-    excerpt:
-      "My journey toward understanding how large-scale applications are designed and structured.",
-    date: "August 2026",
-  },
-  {
-    title: "Why Clean Architecture Matters",
-    excerpt:
-      "How good structure can make a project easier to understand, maintain and scale.",
-    date: "July 2026",
-  },
-];
+import Card from "../common/Card";
+import { getApi } from "@/api/getapi";
+
+type Blog = {
+  id: string;
+  title: string;
+  slug: string;
+  excerpt?: string | null;
+  coverImage?: string | null;
+  publishedAt?: string | null;
+  createdAt: string;
+};
 
 export default function Blog() {
+  const [posts, setPosts] = useState<Blog[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const fetchPosts = async () => {
+      try {
+        const response = await getApi(
+          "/blog-posts",
+        );
+
+        const result = await response.json();
+
+        if (cancelled) return;
+
+        if (!response.ok) {
+          throw new Error(
+            result?.message ||
+              "Failed to fetch blog posts",
+          );
+        }
+
+        const blogData: Blog[] =
+          Array.isArray(result)
+            ? result
+            : Array.isArray(result?.data)
+              ? result.data
+              : [];
+
+        setPosts(blogData);
+      } catch (error) {
+        console.error(
+          "Failed to fetch blog posts:",
+          error,
+        );
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchPosts();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const formatDate = (
+    date?: string | null,
+  ) => {
+    if (!date) return "";
+
+    return new Date(
+      date,
+    ).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  };
+
   return (
     <section
       id="blog"
@@ -38,41 +96,83 @@ export default function Blog() {
           </p>
 
           <h2 className="mt-2 text-3xl font-bold">
-            Things I'm learning.
+            Things Im learning.
           </h2>
         </div>
 
-        <div className="grid gap-4">
-          {posts.map((post) => (
-            <Card
-              key={post.title}
-              className="p-7 transition duration-300 hover:bg-white/10"
-            >
-              <div className="flex items-start justify-between gap-5">
-                <div>
-                  <p className="text-xs text-white/40">
-                    {post.date}
-                  </p>
+        {loading ? (
+          <div className="py-10 text-sm text-white/40">
+            Loading posts...
+          </div>
+        ) : posts.length === 0 ? (
+          <div className="py-10 text-sm text-white/40">
+            No blog posts available.
+          </div>
+        ) : (
+          <div className="grid gap-4">
+            {posts.map((post) => (
+              <Card
+                key={post.id}
+                className="p-7 transition duration-300 hover:bg-white/10"
+              >
+                <div className="flex items-start gap-5">
+                  {/* COVER IMAGE */}
 
-                  <h3 className="mt-3 text-lg font-semibold">
-                    {post.title}
-                  </h3>
+                  {post.coverImage ? (
+                    <div className="relative hidden h-24 w-32 shrink-0 overflow-hidden rounded-xl border border-white/10 bg-white/5 sm:block">
+                      <Image
+                        src={post.coverImage}
+                        alt={post.title}
+                        fill
+                        unoptimized
+                        className="object-cover"
+                        sizes="128px"
+                      />
+                    </div>
+                  ) : (
+                    <div className="hidden h-24 w-32 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/5 sm:flex">
+                      <ImagePlus
+                        size={22}
+                        className="text-white/20"
+                        strokeWidth={1.5}
+                      />
+                    </div>
+                  )}
 
-                  <p className="mt-3 text-sm leading-6 text-white/50">
-                    {post.excerpt}
-                  </p>
+                  {/* CONTENT */}
+
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs text-white/40">
+                      {formatDate(
+                        post.publishedAt,
+                      )}
+                    </p>
+
+                    <h3 className="mt-2 text-lg font-semibold text-white">
+                      {post.title}
+                    </h3>
+
+                    {post.excerpt && (
+                      <p className="mt-3 text-sm leading-6 text-white/50">
+                        {post.excerpt}
+                      </p>
+                    )}
+
+                    <Link
+                      href={`/blog/${post.slug}`}
+                      className="mt-4 inline-flex items-center gap-1.5 text-sm text-white/60 transition hover:text-white"
+                    >
+                      See more
+                      <ArrowUpRight
+                        size={15}
+                      />
+                    </Link>
+                  </div>
                 </div>
-
-                <Link
-                  href="/blog"
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5"
-                >
-                  <ArrowUpRight size={16} />
-                </Link>
-              </div>
-            </Card>
-          ))}
-        </div>
+              </Card>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );

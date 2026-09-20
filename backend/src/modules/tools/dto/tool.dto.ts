@@ -15,10 +15,6 @@ export class CreateToolDto {
 
   @IsOptional()
   @IsString()
-  logo?: string;
-
-  @IsOptional()
-  @IsString()
   description?: string;
 
   @IsEnum(ToolCategory)
@@ -38,10 +34,6 @@ export class UpdateToolDto {
   @IsOptional()
   @IsString()
   name?: string;
-
-  @IsOptional()
-  @IsString()
-  logo?: string;
 
   @IsOptional()
   @IsString()

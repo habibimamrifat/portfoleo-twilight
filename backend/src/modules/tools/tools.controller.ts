@@ -6,14 +6,14 @@ import {
   Param,
   Patch,
   Post,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 import { CreateToolDto, UpdateToolDto } from './dto/tool.dto';
-
 import { RouteFor, routeTypeObj } from '../../decorators/route.decorator';
-
 import { ResponseMessage } from '../../decorators/response-message.decorator';
-
 import { CurrentUser } from '../../decorators/current-user.decorator';
 import { ToolsService } from './tools.service';
 import type { CurrentUserType } from '../../types/currentUser';
@@ -32,11 +32,23 @@ export class ToolsController {
   @Post()
   @RouteFor(routeTypeObj.ADMIN)
   @ResponseMessage('Tool created successfully')
+  @UseInterceptors(FileInterceptor('logo'))
   create(
     @CurrentUser() user: CurrentUserType,
-    @Body() createToolDto: CreateToolDto,
+    @Body() body: Record<string, string>,
+    @UploadedFile() logo?: Express.Multer.File,
   ) {
-    return this.toolsService.create(user.sub, createToolDto);
+    const createToolDto: CreateToolDto = {
+      name: body.name,
+      description: body.description,
+      category: body.category as CreateToolDto['category'],
+      sortOrder:
+        body.sortOrder !== undefined ? Number(body.sortOrder) : undefined,
+      isActive:
+        body.isActive !== undefined ? body.isActive === 'true' : undefined,
+    };
+
+    return this.toolsService.create(user.sub, createToolDto, logo);
   }
 
   @Get(':id')
@@ -49,8 +61,35 @@ export class ToolsController {
   @Patch(':id')
   @RouteFor(routeTypeObj.ADMIN)
   @ResponseMessage('Tool updated successfully')
-  update(@Param('id') id: string, @Body() updateToolDto: UpdateToolDto) {
-    return this.toolsService.update(id, updateToolDto);
+  @UseInterceptors(FileInterceptor('logo'))
+  update(
+    @Param('id') id: string,
+    @Body() body: Record<string, string>,
+    @UploadedFile() logo?: Express.Multer.File,
+  ) {
+    const updateToolDto: UpdateToolDto = {
+      ...(body.name !== undefined && {
+        name: body.name,
+      }),
+
+      ...(body.description !== undefined && {
+        description: body.description,
+      }),
+
+      ...(body.category !== undefined && {
+        category: body.category as UpdateToolDto['category'],
+      }),
+
+      ...(body.sortOrder !== undefined && {
+        sortOrder: Number(body.sortOrder),
+      }),
+
+      ...(body.isActive !== undefined && {
+        isActive: body.isActive === 'true',
+      }),
+    };
+
+    return this.toolsService.update(id, updateToolDto, logo);
   }
 
   @Delete(':id')

@@ -1,3 +1,4 @@
+
 "use client";
 
 import Image from "next/image";
@@ -15,9 +16,9 @@ import {
 } from "lucide-react";
 
 import Card from "@/components/common/Card";
+import { getApi } from "@/api/getapi";
+import { callApi } from "@/api/callApi";
 
-const API_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
 type BlogStatus = "DRAFT" | "PUBLISHED" | "ARCHIVED";
 
@@ -62,14 +63,17 @@ export default function BlogPage() {
   const [imagePreview, setImagePreview] =
     useState<string | null>(null);
 
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingId, setEditingId] =
+    useState<string | null>(null);
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+
   const [deletingId, setDeletingId] =
     useState<string | null>(null);
 
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] =
+    useState<string | null>(null);
 
   // =========================
   // LOAD BLOGS
@@ -80,27 +84,19 @@ export default function BlogPage() {
 
     const loadBlogs = async () => {
       try {
-        const token = localStorage.getItem("portfolio");
-
-        const response = await fetch(
-          `${API_URL}/blog-posts/admin/all`,
-          {
-            method: "GET",
-            headers: {
-              ...(token
-                ? {
-                    Authorization: `Bearer ${token}`,
-                  }
-                : {}),
-            },
-          },
+        const response = await getApi(
+          "/blog-posts/admin/all",
+          true,
         );
 
         const result = await response.json();
 
+        if (cancelled) return;
+
         if (!response.ok) {
           throw new Error(
-            result?.message || "Failed to load blog posts",
+            result?.message ||
+              "Failed to load blog posts",
           );
         }
 
@@ -110,9 +106,7 @@ export default function BlogPage() {
             ? result.data
             : [];
 
-        if (!cancelled) {
-          setBlogs(blogData);
-        }
+        setBlogs(blogData);
       } catch (err) {
         if (!cancelled) {
           setError(
@@ -142,12 +136,15 @@ export default function BlogPage() {
   const stats = useMemo(() => {
     return {
       total: blogs.length,
+
       published: blogs.filter(
         (blog) => blog.status === "PUBLISHED",
       ).length,
+
       drafts: blogs.filter(
         (blog) => blog.status === "DRAFT",
       ).length,
+
       archived: blogs.filter(
         (blog) => blog.status === "ARCHIVED",
       ).length,
@@ -169,11 +166,13 @@ export default function BlogPage() {
 
     if (!file.type.startsWith("image/")) {
       setError("Please select an image file.");
+      event.target.value = "";
       return;
     }
 
     if (file.size > 5 * 1024 * 1024) {
       setError("Image size must be less than 5MB.");
+      event.target.value = "";
       return;
     }
 
@@ -181,9 +180,16 @@ export default function BlogPage() {
 
     setSelectedImage(file);
 
-    const previewUrl = URL.createObjectURL(file);
+    const previewUrl =
+      URL.createObjectURL(file);
 
-    setImagePreview(previewUrl);
+    setImagePreview((previous) => {
+      if (previous?.startsWith("blob:")) {
+        URL.revokeObjectURL(previous);
+      }
+
+      return previewUrl;
+    });
   };
 
   // =========================
@@ -191,6 +197,10 @@ export default function BlogPage() {
   // =========================
 
   const resetForm = () => {
+    if (imagePreview?.startsWith("blob:")) {
+      URL.revokeObjectURL(imagePreview);
+    }
+
     setForm(emptyForm);
     setSelectedImage(null);
     setImagePreview(null);
@@ -221,6 +231,10 @@ export default function BlogPage() {
   // =========================
 
   const handleEdit = (blog: Blog) => {
+    if (imagePreview?.startsWith("blob:")) {
+      URL.revokeObjectURL(imagePreview);
+    }
+
     setEditingId(blog.id);
 
     setForm({
@@ -237,9 +251,7 @@ export default function BlogPage() {
     });
 
     setSelectedImage(null);
-
     setImagePreview(blog.coverImage ?? null);
-
     setError(null);
 
     window.scrollTo({
@@ -276,44 +288,62 @@ export default function BlogPage() {
       setSaving(true);
       setError(null);
 
-      const token = localStorage.getItem("portfolio");
-
       const formData = new FormData();
 
-      formData.append("title", form.title.trim());
-      formData.append("slug", form.slug.trim());
-      formData.append("excerpt", form.excerpt.trim());
-      formData.append("content", form.content);
-      formData.append("status", form.status);
+      formData.append(
+        "title",
+        form.title.trim(),
+      );
+
+      formData.append(
+        "slug",
+        form.slug.trim(),
+      );
+
+      formData.append(
+        "excerpt",
+        form.excerpt.trim(),
+      );
+
+      formData.append(
+        "content",
+        form.content,
+      );
+
+      formData.append(
+        "status",
+        form.status,
+      );
 
       if (form.publishedAt) {
         formData.append(
           "publishedAt",
-          new Date(form.publishedAt).toISOString(),
+          new Date(
+            form.publishedAt,
+          ).toISOString(),
         );
       }
 
       if (selectedImage) {
-        formData.append("coverImage", selectedImage);
+        formData.append(
+          "coverImage",
+          selectedImage,
+        );
       }
 
-      const url = editingId
-        ? `${API_URL}/blog-posts/${editingId}`
-        : `${API_URL}/blog-posts`;
-
-      const method = editingId ? "PATCH" : "POST";
-
-      const response = await fetch(url, {
-        method,
-        headers: {
-          ...(token
-            ? {
-                Authorization: `Bearer ${token}`,
-              }
-            : {}),
-        },
-        body: formData,
-      });
+      const response = editingId
+        ? await callApi(
+            `/blog-posts/${editingId}`,
+            "PATCH",
+            formData,
+            true,
+          )
+        : await callApi(
+            "/blog-posts",
+            "POST",
+            formData,
+            true,
+          );
 
       const result = await response.json();
 
@@ -321,7 +351,9 @@ export default function BlogPage() {
         throw new Error(
           result?.message ||
             `Failed to ${
-              editingId ? "update" : "create"
+              editingId
+                ? "update"
+                : "create"
             } blog post`,
         );
       }
@@ -360,7 +392,9 @@ export default function BlogPage() {
   // DELETE
   // =========================
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (
+    id: string,
+  ) => {
     const confirmed = window.confirm(
       "Are you sure you want to delete this blog post?",
     );
@@ -373,23 +407,15 @@ export default function BlogPage() {
       setDeletingId(id);
       setError(null);
 
-      const token = localStorage.getItem("portfolio");
-
-      const response = await fetch(
-        `${API_URL}/blog-posts/${id}`,
-        {
-          method: "DELETE",
-          headers: {
-            ...(token
-              ? {
-                  Authorization: `Bearer ${token}`,
-                }
-              : {}),
-          },
-        },
+      const response = await callApi(
+        `/blog-posts/${id}`,
+        "DELETE",
+        undefined,
+        true,
       );
 
-      const result = await response.json();
+      const result =
+        await response.json();
 
       if (!response.ok) {
         throw new Error(
@@ -399,7 +425,9 @@ export default function BlogPage() {
       }
 
       setBlogs((previous) =>
-        previous.filter((blog) => blog.id !== id),
+        previous.filter(
+          (blog) => blog.id !== id,
+        ),
       );
 
       if (editingId === id) {
@@ -420,26 +448,25 @@ export default function BlogPage() {
   // FORMAT DATE
   // =========================
 
-  const formatDate = (date?: string | null) => {
+  const formatDate = (
+    date?: string | null,
+  ) => {
     if (!date) {
       return "Not published";
     }
 
-    return new Date(date).toLocaleDateString(
-      "en-US",
-      {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-      },
-    );
+    return new Date(
+      date,
+    ).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
   };
 
   return (
     <div className="space-y-6 pb-10">
-      {/* =========================
-          HEADER
-      ========================= */}
+      {/* HEADER */}
 
       <div>
         <div className="flex items-center gap-3">
@@ -463,9 +490,7 @@ export default function BlogPage() {
         </div>
       </div>
 
-      {/* =========================
-          ERROR
-      ========================= */}
+      {/* ERROR */}
 
       {error && (
         <div className="flex items-center justify-between rounded-2xl border border-red-400/20 bg-red-500/10 px-4 py-3 text-sm text-red-200">
@@ -481,9 +506,7 @@ export default function BlogPage() {
         </div>
       )}
 
-      {/* =========================
-          STATS
-      ========================= */}
+      {/* STATS */}
 
       <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
         <Card className="p-5">
@@ -567,9 +590,7 @@ export default function BlogPage() {
         </Card>
       </div>
 
-      {/* =========================
-          FORM
-      ========================= */}
+      {/* FORM */}
 
       <Card className="p-6">
         <div className="mb-6 flex items-center justify-between">
@@ -591,12 +612,7 @@ export default function BlogPage() {
             <button
               type="button"
               onClick={resetForm}
-              className="
-                flex items-center gap-2 rounded-xl border
-                border-white/10 bg-white/5 px-3 py-2
-                text-sm text-white/60 transition
-                hover:bg-white/10 hover:text-white
-              "
+              className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/60 transition hover:bg-white/10 hover:text-white"
             >
               <X size={16} />
               Cancel
@@ -622,17 +638,12 @@ export default function BlogPage() {
                 onChange={(event) =>
                   setForm((previous) => ({
                     ...previous,
-                    title: event.target.value,
+                    title:
+                      event.target.value,
                   }))
                 }
                 placeholder="Enter blog title"
-                className="
-                  h-11 w-full rounded-xl border
-                  border-white/10 bg-white/5 px-4
-                  text-sm text-white outline-none
-                  placeholder:text-white/25
-                  focus:border-white/25
-                "
+                className="h-11 w-full rounded-xl border border-white/10 bg-white/5 px-4 text-sm text-white outline-none placeholder:text-white/25 focus:border-white/25"
               />
             </div>
 
@@ -648,27 +659,18 @@ export default function BlogPage() {
                   onChange={(event) =>
                     setForm((previous) => ({
                       ...previous,
-                      slug: event.target.value,
+                      slug:
+                        event.target.value,
                     }))
                   }
                   placeholder="blog-post-slug"
-                  className="
-                    h-11 min-w-0 flex-1 rounded-xl border
-                    border-white/10 bg-white/5 px-4
-                    text-sm text-white outline-none
-                    placeholder:text-white/25
-                    focus:border-white/25
-                  "
+                  className="h-11 min-w-0 flex-1 rounded-xl border border-white/10 bg-white/5 px-4 text-sm text-white outline-none placeholder:text-white/25 focus:border-white/25"
                 />
 
                 <button
                   type="button"
                   onClick={generateSlug}
-                  className="
-                    rounded-xl border border-white/10
-                    bg-white/5 px-4 text-sm text-white/60
-                    transition hover:bg-white/10 hover:text-white
-                  "
+                  className="rounded-xl border border-white/10 bg-white/5 px-4 text-sm text-white/60 transition hover:bg-white/10 hover:text-white"
                 >
                   Generate
                 </button>
@@ -688,18 +690,13 @@ export default function BlogPage() {
               onChange={(event) =>
                 setForm((previous) => ({
                   ...previous,
-                  excerpt: event.target.value,
+                  excerpt:
+                    event.target.value,
                 }))
               }
               rows={3}
               placeholder="Short description of the article..."
-              className="
-                w-full resize-none rounded-xl border
-                border-white/10 bg-white/5 px-4 py-3
-                text-sm text-white outline-none
-                placeholder:text-white/25
-                focus:border-white/25
-              "
+              className="w-full resize-none rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none placeholder:text-white/25 focus:border-white/25"
             />
           </div>
 
@@ -715,22 +712,17 @@ export default function BlogPage() {
               onChange={(event) =>
                 setForm((previous) => ({
                   ...previous,
-                  content: event.target.value,
+                  content:
+                    event.target.value,
                 }))
               }
               rows={12}
               placeholder="Write your blog content..."
-              className="
-                w-full resize-y rounded-xl border
-                border-white/10 bg-white/5 px-4 py-3
-                text-sm leading-6 text-white outline-none
-                placeholder:text-white/25
-                focus:border-white/25
-              "
+              className="w-full resize-y rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm leading-6 text-white outline-none placeholder:text-white/25 focus:border-white/25"
             />
           </div>
 
-          {/* IMAGE */}
+          {/* COVER IMAGE */}
 
           <div>
             <label className="mb-2 block text-sm text-white/60">
@@ -738,16 +730,7 @@ export default function BlogPage() {
             </label>
 
             <div className="grid gap-4 lg:grid-cols-[1fr_240px]">
-              <label
-                className="
-                  flex min-h-32 cursor-pointer flex-col
-                  items-center justify-center rounded-2xl
-                  border border-dashed border-white/15
-                  bg-white/5 px-5 py-6 text-center
-                  transition hover:border-white/25
-                  hover:bg-white/10
-                "
-              >
+              <label className="flex min-h-32 cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed border-white/15 bg-white/5 px-5 py-6 text-center transition hover:border-white/25 hover:bg-white/10">
                 <ImagePlus
                   size={28}
                   className="mb-3 text-white/40"
@@ -810,12 +793,7 @@ export default function BlogPage() {
                       event.target.value as BlogStatus,
                   }))
                 }
-                className="
-                  h-11 w-full rounded-xl border
-                  border-white/10 bg-white/5 px-4
-                  text-sm text-white outline-none
-                  focus:border-white/25
-                "
+                className="h-11 w-full rounded-xl border border-white/10 bg-white/5 px-4 text-sm text-white outline-none focus:border-white/25"
               >
                 <option
                   value="DRAFT"
@@ -851,15 +829,11 @@ export default function BlogPage() {
                 onChange={(event) =>
                   setForm((previous) => ({
                     ...previous,
-                    publishedAt: event.target.value,
+                    publishedAt:
+                      event.target.value,
                   }))
                 }
-                className="
-                  h-11 w-full rounded-xl border
-                  border-white/10 bg-white/5 px-4
-                  text-sm text-white outline-none
-                  focus:border-white/25
-                "
+                className="h-11 w-full rounded-xl border border-white/10 bg-white/5 px-4 text-sm text-white outline-none focus:border-white/25"
               />
             </div>
           </div>
@@ -870,15 +844,7 @@ export default function BlogPage() {
             <button
               type="submit"
               disabled={saving}
-              className="
-                flex items-center gap-2 rounded-xl
-                border border-white/20 bg-white/10
-                px-5 py-2.5 text-sm font-medium
-                text-white transition
-                hover:bg-white/15
-                disabled:cursor-not-allowed
-                disabled:opacity-50
-              "
+              className="flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-white/15 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {saving ? (
                 <Loader2
@@ -901,9 +867,7 @@ export default function BlogPage() {
         </form>
       </Card>
 
-      {/* =========================
-          BLOG LIST
-      ========================= */}
+      {/* BLOG LIST */}
 
       <Card className="p-6">
         <div className="mb-5">
@@ -940,13 +904,7 @@ export default function BlogPage() {
             {blogs.map((blog) => (
               <div
                 key={blog.id}
-                className="
-                  flex flex-col gap-4 rounded-2xl
-                  border border-white/10 bg-white/5
-                  p-4 transition
-                  hover:border-white/15
-                  lg:flex-row lg:items-center
-                "
+                className="flex flex-col gap-4 rounded-2xl border border-white/10 bg-white/5 p-4 transition hover:border-white/15 lg:flex-row lg:items-center"
               >
                 {/* IMAGE */}
 
@@ -979,19 +937,7 @@ export default function BlogPage() {
                       {blog.title}
                     </h3>
 
-                    <span
-                      className={`
-                        rounded-full border px-2.5 py-1
-                        text-[11px]
-                        ${
-                          blog.status === "PUBLISHED"
-                            ? "border-emerald-400/20 bg-emerald-400/10 text-emerald-300"
-                            : blog.status === "ARCHIVED"
-                              ? "border-orange-400/20 bg-orange-400/10 text-orange-300"
-                              : "border-white/10 bg-white/5 text-white/50"
-                        }
-                      `}
-                    >
+                    <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] text-white/50">
                       {blog.status}
                     </span>
                   </div>
@@ -1007,7 +953,8 @@ export default function BlogPage() {
                   )}
 
                   <p className="mt-2 text-xs text-white/30">
-                    {blog.status === "PUBLISHED"
+                    {blog.status ===
+                    "PUBLISHED"
                       ? `Published ${formatDate(
                           blog.publishedAt,
                         )}`
@@ -1022,15 +969,10 @@ export default function BlogPage() {
                 <div className="flex shrink-0 gap-2">
                   <button
                     type="button"
-                    onClick={() => handleEdit(blog)}
-                    className="
-                      flex h-10 w-10 items-center
-                      justify-center rounded-xl
-                      border border-white/10
-                      bg-white/5 text-white/50
-                      transition hover:bg-white/10
-                      hover:text-white
-                    "
+                    onClick={() =>
+                      handleEdit(blog)
+                    }
+                    className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white/50 transition hover:bg-white/10 hover:text-white"
                     title="Edit"
                   >
                     <Edit3
@@ -1044,20 +986,15 @@ export default function BlogPage() {
                     onClick={() =>
                       handleDelete(blog.id)
                     }
-                    disabled={deletingId === blog.id}
-                    className="
-                      flex h-10 w-10 items-center
-                      justify-center rounded-xl
-                      border border-red-400/10
-                      bg-red-500/5 text-red-300/60
-                      transition hover:bg-red-500/10
-                      hover:text-red-300
-                      disabled:cursor-not-allowed
-                      disabled:opacity-50
-                    "
+                    disabled={
+                      deletingId ===
+                      blog.id
+                    }
+                    className="flex h-10 w-10 items-center justify-center rounded-xl border border-red-400/10 bg-red-500/5 text-red-300/60 transition hover:bg-red-500/10 hover:text-red-300 disabled:cursor-not-allowed disabled:opacity-50"
                     title="Delete"
                   >
-                    {deletingId === blog.id ? (
+                    {deletingId ===
+                    blog.id ? (
                       <Loader2
                         size={16}
                         className="animate-spin"
@@ -1078,3 +1015,4 @@ export default function BlogPage() {
     </div>
   );
 }
+

@@ -2,6 +2,7 @@
 
 import Card from "../common/Card";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -90,7 +91,26 @@ function formatPeriod(
   return `${startYear} — ${end.getFullYear()}`;
 }
 
+function getWordsPreview(
+  text: string | null | undefined,
+  maxWords = 200,
+) {
+  if (!text) {
+    return "";
+  }
+
+  const words = text.trim().split(/\s+/);
+
+  if (words.length <= maxWords) {
+    return text.trim();
+  }
+
+  return `${words.slice(0, maxWords).join(" ")}...`;
+}
+
 export default function Experience() {
+  const router = useRouter();
+
   const [experiences, setExperiences] =
     useState<Experience[]>(defaultExperiences);
 
@@ -180,8 +200,33 @@ export default function Experience() {
                   </p>
 
                   <p className="mt-2 text-sm leading-7 text-white/50">
-                    {experience.learned}
+                    {getWordsPreview(experience.learned, 200)}
                   </p>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      router.push(
+                        `/experience/${experience.id}`,
+                      )
+                    }
+                    className="
+                      mt-4
+                      rounded-xl
+                      border border-white/15
+                      bg-white/5
+                      px-4 py-2
+                      text-xs
+                      text-white/70
+                      backdrop-blur-sm
+                      transition-all
+                      duration-300
+                      hover:bg-white/10
+                      hover:text-white
+                    "
+                  >
+                    View Detail
+                  </button>
                 </div>
               )}
             </Card>

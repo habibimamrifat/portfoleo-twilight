@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -8,12 +9,11 @@ import {
   X,
   Workflow,
 } from "lucide-react";
+
 import Card from "@/components/common/Card";
+import { callApi } from "@/api/callApi";
+import { getApi } from "@/api/getapi";
 
-
-
-const API_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
 interface ProcessStep {
   id: string;
@@ -53,19 +53,25 @@ export default function ProcessPage() {
   const [form, setForm] =
     useState<ProcessStepForm>(emptyForm);
 
-  const token =
-    typeof window !== "undefined"
-      ? localStorage.getItem("portfolio")
-      : null;
-
   useEffect(() => {
     let cancelled = false;
 
     const fetchProcessSteps = async () => {
       try {
-        const response = await fetch(
-          `${API_URL}/process-steps`,
+        const response = await getApi(
+          "/process-steps",
         );
+
+        if (!response.ok) {
+          const result = await response.json().catch(
+            () => null,
+          );
+
+          throw new Error(
+            result?.message ||
+              "Failed to fetch process steps",
+          );
+        }
 
         const result = await response.json();
 
@@ -79,7 +85,11 @@ export default function ProcessPage() {
             ? result.data
             : [];
 
-        setProcessSteps(processData);
+        setProcessSteps(
+          [...processData].sort(
+            (a, b) => a.sortOrder - b.sortOrder,
+          ),
+        );
       } catch (error) {
         console.error(
           "Failed to fetch process steps:",
@@ -156,8 +166,13 @@ export default function ProcessPage() {
   ) => {
     e.preventDefault();
 
-    if (!token) {
-      alert("You are not authenticated.");
+    if (!form.name.trim()) {
+      alert("Step name is required.");
+      return;
+    }
+
+    if (!form.detail.trim()) {
+      alert("Step detail is required.");
       return;
     }
 
@@ -165,26 +180,25 @@ export default function ProcessPage() {
 
     try {
       const body = {
-        name: form.name,
-        detail: form.detail,
+        name: form.name.trim(),
+        detail: form.detail.trim(),
         sortOrder: Number(form.sortOrder) || 0,
         isActive: form.isActive,
       };
 
-      const url = editingId
-        ? `${API_URL}/process-steps/${editingId}`
-        : `${API_URL}/process-steps`;
-
-      const method = editingId ? "PATCH" : "POST";
-
-      const response = await fetch(url, {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(body),
-      });
+      const response = editingId
+        ? await callApi(
+            `/process-steps/${editingId}`,
+            "PATCH",
+            body,
+            true,
+          )
+        : await callApi(
+            "/process-steps",
+            "POST",
+            body,
+            true,
+          );
 
       const result = await response.json();
 
@@ -239,11 +253,6 @@ export default function ProcessPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!token) {
-      alert("You are not authenticated.");
-      return;
-    }
-
     const confirmed = window.confirm(
       "Are you sure you want to delete this process step?",
     );
@@ -251,14 +260,11 @@ export default function ProcessPage() {
     if (!confirmed) return;
 
     try {
-      const response = await fetch(
-        `${API_URL}/process-steps/${id}`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        },
+      const response = await callApi(
+        `/process-steps/${id}`,
+        "DELETE",
+        undefined,
+        true,
       );
 
       const result = await response.json();
@@ -305,10 +311,15 @@ export default function ProcessPage() {
           type="button"
           onClick={openCreateModal}
           className="
-            flex items-center gap-2 rounded-2xl
-            border border-white/20 bg-white/10
-            px-4 py-2.5 text-sm text-white
-            backdrop-blur-xs transition-all duration-300
+            flex items-center gap-2
+            rounded-2xl
+            border border-white/20
+            bg-white/10
+            px-4 py-2.5
+            text-sm text-white
+            backdrop-blur-xs
+            transition-all
+            duration-300
             hover:bg-white/15
           "
         >
@@ -339,6 +350,24 @@ export default function ProcessPage() {
               Add the steps you follow when working
               with clients.
             </p>
+
+            <button
+              type="button"
+              onClick={openCreateModal}
+              className="
+                mt-5
+                rounded-xl
+                border border-white/10
+                bg-white/5
+                px-4 py-2
+                text-sm text-white/70
+                transition-all
+                hover:bg-white/10
+                hover:text-white
+              "
+            >
+              Add First Step
+            </button>
           </div>
         </Card>
       ) : (
@@ -354,8 +383,10 @@ export default function ProcessPage() {
                   className="
                     flex h-11 w-11 shrink-0
                     items-center justify-center
-                    rounded-2xl border border-white/10
-                    bg-white/5 text-sm text-white/60
+                    rounded-2xl
+                    border border-white/10
+                    bg-white/5
+                    text-sm text-white/60
                   "
                 >
                   {String(index + 1).padStart(2, "0")}
@@ -372,8 +403,10 @@ export default function ProcessPage() {
 
                         <span
                           className={`
-                            rounded-full border px-2
-                            py-0.5 text-[10px]
+                            rounded-full
+                            border
+                            px-2 py-0.5
+                            text-[10px]
                             ${
                               step.isActive
                                 ? "border-white/15 bg-white/10 text-white/70"
@@ -400,8 +433,9 @@ export default function ProcessPage() {
                           openEditModal(step)
                         }
                         className="
-                          flex h-9 w-9 items-center
-                          justify-center rounded-xl
+                          flex h-9 w-9
+                          items-center justify-center
+                          rounded-xl
                           border border-white/10
                           text-white/50
                           transition-all
@@ -419,8 +453,9 @@ export default function ProcessPage() {
                           handleDelete(step.id)
                         }
                         className="
-                          flex h-9 w-9 items-center
-                          justify-center rounded-xl
+                          flex h-9 w-9
+                          items-center justify-center
+                          rounded-xl
                           border border-white/10
                           text-white/50
                           transition-all
@@ -448,15 +483,19 @@ export default function ProcessPage() {
       {isModalOpen && (
         <div
           className="
-            fixed inset-0 z-50 flex items-center
-            justify-center bg-black/60 p-4
+            fixed inset-0 z-50
+            flex items-center justify-center
+            bg-black/60
+            p-4
             backdrop-blur-sm
           "
         >
           <div
             className="
-              relative w-full max-w-2xl
-              overflow-hidden rounded-3xl
+              relative
+              w-full max-w-2xl
+              overflow-hidden
+              rounded-3xl
               border border-white/20
               bg-white/5
               shadow-[0_25px_80px_rgba(0,0,0,0.55)]
@@ -488,8 +527,9 @@ export default function ProcessPage() {
                 onClick={closeModal}
                 disabled={saving}
                 className="
-                  flex h-9 w-9 items-center
-                  justify-center rounded-xl
+                  flex h-9 w-9
+                  items-center justify-center
+                  rounded-xl
                   border border-white/10
                   text-white/50
                   transition-all
@@ -518,11 +558,14 @@ export default function ProcessPage() {
                     onChange={handleChange}
                     placeholder="Requirement Analysis"
                     className="
-                      w-full rounded-xl
+                      w-full
+                      rounded-xl
                       border border-white/10
-                      bg-white/5 px-4 py-3
+                      bg-white/5
+                      px-4 py-3
                       text-sm text-white
-                      outline-none transition
+                      outline-none
+                      transition
                       placeholder:text-white/25
                       focus:border-white/30
                     "
@@ -543,11 +586,17 @@ export default function ProcessPage() {
                     rows={5}
                     placeholder="Describe what happens during this step..."
                     className="
-                      w-full resize-none rounded-xl
+                      w-full
+                      resize-none
+                      rounded-xl
                       border border-white/10
-                      bg-white/5 px-4 py-3
-                      text-sm leading-6 text-white
-                      outline-none transition
+                      bg-white/5
+                      px-4 py-3
+                      text-sm
+                      leading-6
+                      text-white
+                      outline-none
+                      transition
                       placeholder:text-white/25
                       focus:border-white/30
                     "
@@ -568,11 +617,15 @@ export default function ProcessPage() {
                     value={form.sortOrder}
                     onChange={handleChange}
                     className="
-                      w-full rounded-xl
+                      w-full
+                      rounded-xl
                       border border-white/10
-                      bg-white/5 px-4 py-3
-                      text-sm text-white
-                      outline-none transition
+                      bg-white/5
+                      px-4 py-3
+                      text-sm
+                      text-white
+                      outline-none
+                      transition
                       focus:border-white/30
                     "
                   />

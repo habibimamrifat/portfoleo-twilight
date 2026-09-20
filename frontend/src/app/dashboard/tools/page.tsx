@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -7,19 +8,21 @@ import {
   Trash2,
   X,
   Layers3,
+  Upload,
 } from "lucide-react";
+
 import Card from "@/components/common/Card";
+import { getApi } from "@/api/getapi";
+import { callApi } from "@/api/callApi";
 
-
-
-const API_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
 const toolCategories = [
   "FRONTEND",
   "BACKEND",
   "DATABASE",
+  "DEVTOOLS",
   "DEVOPS",
+  "DESIGN",
   "OTHER",
 ];
 
@@ -35,7 +38,7 @@ interface Tool {
 
 interface ToolForm {
   name: string;
-  logo: string;
+  logo: File | null;
   description: string;
   category: string;
   sortOrder: string;
@@ -44,7 +47,7 @@ interface ToolForm {
 
 const emptyForm: ToolForm = {
   name: "",
-  logo: "",
+  logo: null,
   description: "",
   category: "FRONTEND",
   sortOrder: "0",
@@ -56,30 +59,39 @@ export default function ToolsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(
-    null,
-  );
+  const [isModalOpen, setIsModalOpen] =
+    useState(false);
 
-  const [form, setForm] = useState<ToolForm>(emptyForm);
+  const [editingId, setEditingId] =
+    useState<string | null>(null);
 
-  const token =
-    typeof window !== "undefined"
-      ? localStorage.getItem("portfolio")
-      : null;
+  const [form, setForm] =
+    useState<ToolForm>(emptyForm);
+
+  const [logoPreview, setLogoPreview] =
+    useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
 
     const fetchTools = async () => {
       try {
-        const response = await fetch(`${API_URL}/tools`);
+        const response = await getApi("/tools");
 
         const result = await response.json();
 
         if (cancelled) return;
 
-        const toolsData: Tool[] = Array.isArray(result)
+        if (!response.ok) {
+          throw new Error(
+            result?.message ||
+              "Failed to fetch tools",
+          );
+        }
+
+        const toolsData: Tool[] = Array.isArray(
+          result,
+        )
           ? result
           : Array.isArray(result?.data)
             ? result.data
@@ -87,7 +99,10 @@ export default function ToolsPage() {
 
         setTools(toolsData);
       } catch (error) {
-        console.error("Failed to fetch tools:", error);
+        console.error(
+          "Failed to fetch tools:",
+          error,
+        );
       } finally {
         if (!cancelled) {
           setLoading(false);
@@ -105,6 +120,7 @@ export default function ToolsPage() {
   const resetForm = () => {
     setForm(emptyForm);
     setEditingId(null);
+    setLogoPreview(null);
   };
 
   const openCreateModal = () => {
@@ -117,12 +133,20 @@ export default function ToolsPage() {
 
     setForm({
       name: tool.name ?? "",
-      logo: tool.logo ?? "",
+      logo: null,
       description: tool.description ?? "",
-      category: tool.category ?? "FRONTEND",
-      sortOrder: String(tool.sortOrder ?? 0),
-      isActive: tool.isActive ?? true,
+      category:
+        tool.category ?? "FRONTEND",
+      sortOrder: String(
+        tool.sortOrder ?? 0,
+      ),
+      isActive:
+        tool.isActive ?? true,
     });
+
+    setLogoPreview(
+      tool.logo ?? null,
+    );
 
     setIsModalOpen(true);
   };
@@ -136,7 +160,9 @@ export default function ToolsPage() {
 
   const handleChange = (
     e: React.ChangeEvent<
-      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+      HTMLInputElement |
+        HTMLTextAreaElement |
+        HTMLSelectElement
     >,
   ) => {
     const { name, value } = e.target;
@@ -156,49 +182,110 @@ export default function ToolsPage() {
     }));
   };
 
+  const handleLogoChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file =
+      e.target.files?.[0] ?? null;
+
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      alert(
+        "Please select an image file.",
+      );
+
+      e.target.value = "";
+      return;
+    }
+
+    setForm((prev) => ({
+      ...prev,
+      logo: file,
+    }));
+
+    const previewUrl =
+      URL.createObjectURL(file);
+
+    setLogoPreview((previous) => {
+      if (
+        previous &&
+        previous.startsWith("blob:")
+      ) {
+        URL.revokeObjectURL(previous);
+      }
+
+      return previewUrl;
+    });
+  };
+
   const handleSubmit = async (
     e: React.FormEvent<HTMLFormElement>,
   ) => {
     e.preventDefault();
 
-    if (!token) {
-      alert("You are not authenticated.");
-      return;
-    }
-
     setSaving(true);
 
     try {
-      const body = {
-        name: form.name,
-        logo: form.logo.trim() || undefined,
-        description:
-          form.description.trim() || undefined,
-        category: form.category,
-        sortOrder: Number(form.sortOrder) || 0,
-        isActive: form.isActive,
-      };
+      const formData = new FormData();
 
-      const url = editingId
-        ? `${API_URL}/tools/${editingId}`
-        : `${API_URL}/tools`;
+      formData.append(
+        "name",
+        form.name.trim(),
+      );
 
-      const method = editingId ? "PATCH" : "POST";
+      if (form.description.trim()) {
+        formData.append(
+          "description",
+          form.description.trim(),
+        );
+      }
 
-      const response = await fetch(url, {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(body),
-      });
+      formData.append(
+        "category",
+        form.category,
+      );
 
-      const result = await response.json();
+      formData.append(
+        "sortOrder",
+        String(
+          Number(form.sortOrder) || 0,
+        ),
+      );
+
+      formData.append(
+        "isActive",
+        String(form.isActive),
+      );
+
+      if (form.logo) {
+        formData.append(
+          "logo",
+          form.logo,
+        );
+      }
+
+      const response = editingId
+        ? await callApi(
+            `/tools/${editingId}`,
+            "PATCH",
+            formData,
+            true,
+          )
+        : await callApi(
+            "/tools",
+            "POST",
+            formData,
+            true,
+          );
+
+      const result =
+        await response.json();
 
       if (!response.ok) {
         throw new Error(
-          result?.message || "Failed to save tool",
+          result?.message ||
+            "Failed to save tool",
         );
       }
 
@@ -215,16 +302,22 @@ export default function ToolsPage() {
             )
             .sort(
               (a, b) =>
-                a.category.localeCompare(b.category) ||
-                a.sortOrder - b.sortOrder,
+                a.category.localeCompare(
+                  b.category,
+                ) ||
+                a.sortOrder -
+                  b.sortOrder,
             ),
         );
       } else {
         setTools((prev) =>
           [...prev, savedTool].sort(
             (a, b) =>
-              a.category.localeCompare(b.category) ||
-              a.sortOrder - b.sortOrder,
+              a.category.localeCompare(
+                b.category,
+              ) ||
+              a.sortOrder -
+                b.sortOrder,
           ),
         );
       }
@@ -232,7 +325,10 @@ export default function ToolsPage() {
       setIsModalOpen(false);
       resetForm();
     } catch (error) {
-      console.error("Failed to save tool:", error);
+      console.error(
+        "Failed to save tool:",
+        error,
+      );
 
       alert(
         error instanceof Error
@@ -244,42 +340,46 @@ export default function ToolsPage() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!token) {
-      alert("You are not authenticated.");
-      return;
-    }
-
-    const confirmed = window.confirm(
-      "Are you sure you want to delete this tool?",
-    );
+  const handleDelete = async (
+    id: string,
+  ) => {
+    const confirmed =
+      window.confirm(
+        "Are you sure you want to delete this tool?",
+      );
 
     if (!confirmed) return;
 
     try {
-      const response = await fetch(
-        `${API_URL}/tools/${id}`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        },
-      );
+      const response =
+        await callApi(
+          `/tools/${id}`,
+          "DELETE",
+          undefined,
+          true,
+        );
 
-      const result = await response.json();
+      const result =
+        await response.json();
 
       if (!response.ok) {
         throw new Error(
-          result?.message || "Failed to delete tool",
+          result?.message ||
+            "Failed to delete tool",
         );
       }
 
       setTools((prev) =>
-        prev.filter((tool) => tool.id !== id),
+        prev.filter(
+          (tool) =>
+            tool.id !== id,
+        ),
       );
     } catch (error) {
-      console.error("Failed to delete tool:", error);
+      console.error(
+        "Failed to delete tool:",
+        error,
+      );
 
       alert(
         error instanceof Error
@@ -289,18 +389,24 @@ export default function ToolsPage() {
     }
   };
 
-  const groupedTools = tools.reduce(
-    (groups, tool) => {
-      if (!groups[tool.category]) {
-        groups[tool.category] = [];
-      }
+  const groupedTools =
+    tools.reduce(
+      (groups, tool) => {
+        if (!groups[tool.category]) {
+          groups[tool.category] = [];
+        }
 
-      groups[tool.category].push(tool);
+        groups[tool.category].push(
+          tool,
+        );
 
-      return groups;
-    },
-    {} as Record<string, Tool[]>,
-  );
+        return groups;
+      },
+      {} as Record<
+        string,
+        Tool[]
+      >,
+    );
 
   return (
     <div className="min-h-full space-y-6 pb-10">
@@ -308,17 +414,20 @@ export default function ToolsPage() {
       <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold text-white">
-            Stack
+            Tools
           </h1>
 
           <p className="mt-1 text-sm text-white/50">
-            Manage the technologies and tools you use.
+            Manage the technologies
+            and tools you use.
           </p>
         </div>
 
         <button
           type="button"
-          onClick={openCreateModal}
+          onClick={
+            openCreateModal
+          }
           className="
             flex items-center gap-2 rounded-2xl
             border border-white/20 bg-white/10
@@ -335,7 +444,7 @@ export default function ToolsPage() {
       {/* Tools */}
       {loading ? (
         <div className="py-20 text-center text-sm text-white/40">
-          Loading stack...
+          Loading tools...
         </div>
       ) : tools.length === 0 ? (
         <Card className="p-10">
@@ -351,69 +460,86 @@ export default function ToolsPage() {
             </h2>
 
             <p className="mt-1 text-sm text-white/40">
-              Add the technologies that make up your
+              Add the technologies
+              that make up your
               development stack.
             </p>
           </div>
         </Card>
       ) : (
         <div className="space-y-6">
-          {Object.entries(groupedTools).map(
-            ([category, categoryTools]) => (
+          {Object.entries(
+            groupedTools,
+          ).map(
+            ([
+              category,
+              categoryTools,
+            ]) => (
               <div key={category}>
                 <div className="mb-3 flex items-center gap-3">
                   <h2 className="text-sm font-medium uppercase tracking-wider text-white/50">
-                    {category.replaceAll("_", " ")}
+                    {category.replaceAll(
+                      "_",
+                      " ",
+                    )}
                   </h2>
 
                   <div className="h-px flex-1 bg-white/10" />
                 </div>
 
                 <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                  {categoryTools.map((tool) => (
-                    <Card
-                      key={tool.id}
-                      className="p-5 backdrop-blur-xs"
-                    >
-                      <div className="flex items-start gap-4">
-                        {/* Logo */}
-                        <div
-                          className="
-                            flex h-12 w-12 shrink-0
-                            items-center justify-center
-                            overflow-hidden rounded-2xl
-                            border border-white/10
-                            bg-white/5
-                          "
-                        >
-                          {tool.logo ? (
-                            <img
-                              src={tool.logo}
-                              alt={tool.name}
-                              className="h-7 w-7 object-contain"
-                            />
-                          ) : (
-                            <Layers3
-                              size={20}
-                              strokeWidth={1.5}
-                              className="text-white/30"
-                            />
-                          )}
-                        </div>
+                  {categoryTools.map(
+                    (tool) => (
+                      <Card
+                        key={tool.id}
+                        className="p-5 backdrop-blur-xs"
+                      >
+                        <div className="flex items-center gap-4">
+                          {/* Logo */}
+                          <div
+                            className="
+                              flex h-10 w-10 shrink-0
+                              items-center justify-center
+                              overflow-hidden rounded-xl
+                              border border-white/10
+                              bg-white/5
+                            "
+                          >
+                            {tool.logo ? (
+                              <img
+                                src={
+                                  tool.logo
+                                }
+                                alt=""
+                                className="h-6 w-6 object-contain"
+                              />
+                            ) : (
+                              <Layers3
+                                size={
+                                  18
+                                }
+                                strokeWidth={
+                                  1.5
+                                }
+                                className="text-white/30"
+                              />
+                            )}
+                          </div>
 
-                        {/* Content */}
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="min-w-0">
+                          {/* Name */}
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2">
                               <h3 className="truncate text-sm font-medium text-white">
-                                {tool.name}
+                                {
+                                  tool.name
+                                }
                               </h3>
 
                               <span
                                 className={`
-                                  mt-1 inline-block
-                                  rounded-full border px-2
-                                  py-0.5 text-[10px]
+                                  shrink-0 rounded-full
+                                  border px-2 py-0.5
+                                  text-[10px]
                                   ${
                                     tool.isActive
                                       ? "border-white/15 bg-white/10 text-white/60"
@@ -427,61 +553,78 @@ export default function ToolsPage() {
                               </span>
                             </div>
 
-                            {/* Actions */}
-                            <div className="flex shrink-0 items-center gap-1">
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  openEditModal(tool)
+                            {tool.description && (
+                              <p className="mt-1 line-clamp-1 text-xs text-white/40">
+                                {
+                                  tool.description
                                 }
-                                className="
-                                  flex h-8 w-8
-                                  items-center justify-center
-                                  rounded-lg
-                                  text-white/40
-                                  transition
-                                  hover:bg-white/10
-                                  hover:text-white
-                                "
-                                title="Edit"
-                              >
-                                <Pencil size={14} />
-                              </button>
+                              </p>
+                            )}
 
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  handleDelete(tool.id)
-                                }
-                                className="
-                                  flex h-8 w-8
-                                  items-center justify-center
-                                  rounded-lg
-                                  text-white/40
-                                  transition
-                                  hover:bg-white/10
-                                  hover:text-white
-                                "
-                                title="Delete"
-                              >
-                                <Trash2 size={14} />
-                              </button>
-                            </div>
+                            <p className="mt-1 text-[10px] text-white/25">
+                              Order:{" "}
+                              {
+                                tool.sortOrder
+                              }
+                            </p>
                           </div>
 
-                          {tool.description && (
-                            <p className="mt-3 line-clamp-2 text-xs leading-5 text-white/40">
-                              {tool.description}
-                            </p>
-                          )}
+                          {/* Actions */}
+                          <div className="flex shrink-0 items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                openEditModal(
+                                  tool,
+                                )
+                              }
+                              className="
+                                flex h-8 w-8
+                                items-center justify-center
+                                rounded-lg
+                                text-white/40
+                                transition
+                                hover:bg-white/10
+                                hover:text-white
+                              "
+                              title="Edit"
+                            >
+                              <Pencil
+                                size={
+                                  14
+                                }
+                              />
+                            </button>
 
-                          <p className="mt-3 text-[10px] text-white/25">
-                            Order: {tool.sortOrder}
-                          </p>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handleDelete(
+                                  tool.id,
+                                )
+                              }
+                              className="
+                                flex h-8 w-8
+                                items-center justify-center
+                                rounded-lg
+                                text-white/40
+                                transition
+                                hover:bg-white/10
+                                hover:text-white
+                              "
+                              title="Delete"
+                            >
+                              <Trash2
+                                size={
+                                  14
+                                }
+                              />
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                    </Card>
-                  ))}
+                      </Card>
+                    ),
+                  )}
                 </div>
               </div>
             ),
@@ -508,7 +651,7 @@ export default function ToolsPage() {
               backdrop-blur-2xl
             "
           >
-            {/* Modal Header */}
+            {/* Header */}
             <div
               className="
                 flex items-center justify-between
@@ -524,7 +667,9 @@ export default function ToolsPage() {
                 </h2>
 
                 <p className="mt-1 text-xs text-white/40">
-                  Add a technology to your development stack.
+                  Add a technology
+                  to your development
+                  tools.
                 </p>
               </div>
 
@@ -548,7 +693,9 @@ export default function ToolsPage() {
             </div>
 
             {/* Form */}
-            <form onSubmit={handleSubmit}>
+            <form
+              onSubmit={handleSubmit}
+            >
               <div className="space-y-5 p-6">
                 {/* Name */}
                 <div>
@@ -559,8 +706,12 @@ export default function ToolsPage() {
                   <input
                     required
                     name="name"
-                    value={form.name}
-                    onChange={handleChange}
+                    value={
+                      form.name
+                    }
+                    onChange={
+                      handleChange
+                    }
                     placeholder="Next.js"
                     className="
                       w-full rounded-xl
@@ -577,24 +728,67 @@ export default function ToolsPage() {
                 {/* Logo */}
                 <div>
                   <label className="mb-2 block text-xs text-white/50">
-                    Logo URL
+                    Tool Logo
                   </label>
 
-                  <input
-                    name="logo"
-                    value={form.logo}
-                    onChange={handleChange}
-                    placeholder="https://..."
-                    className="
-                      w-full rounded-xl
-                      border border-white/10
-                      bg-white/5 px-4 py-3
-                      text-sm text-white
-                      outline-none transition
-                      placeholder:text-white/25
-                      focus:border-white/30
-                    "
-                  />
+                  <div className="flex items-center gap-4">
+                    <label
+                      className="
+                        flex cursor-pointer items-center
+                        gap-2 rounded-xl
+                        border border-white/10
+                        bg-white/5 px-4 py-3
+                        text-sm text-white/60
+                        transition
+                        hover:bg-white/10
+                      "
+                    >
+                      <Upload
+                        size={16}
+                      />
+
+                      <span>
+                        {form.logo
+                          ? "Change Image"
+                          : "Choose Image"}
+                      </span>
+
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={
+                          handleLogoChange
+                        }
+                        className="hidden"
+                      />
+                    </label>
+
+                    {logoPreview && (
+                      <div
+                        className="
+                          flex h-14 w-14
+                          items-center justify-center
+                          overflow-hidden rounded-xl
+                          border border-white/10
+                          bg-white/5
+                        "
+                      >
+                        <img
+                          src={
+                            logoPreview
+                          }
+                          alt="Logo preview"
+                          className="h-9 w-9 object-contain"
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  <p className="mt-2 text-[11px] text-white/30">
+                    Upload a PNG,
+                    JPG, SVG, or other
+                    image.
+                  </p>
                 </div>
 
                 {/* Description */}
@@ -605,8 +799,12 @@ export default function ToolsPage() {
 
                   <textarea
                     name="description"
-                    value={form.description}
-                    onChange={handleChange}
+                    value={
+                      form.description
+                    }
+                    onChange={
+                      handleChange
+                    }
                     rows={4}
                     placeholder="Briefly describe how you use this technology..."
                     className="
@@ -631,8 +829,12 @@ export default function ToolsPage() {
                     <select
                       required
                       name="category"
-                      value={form.category}
-                      onChange={handleChange}
+                      value={
+                        form.category
+                      }
+                      onChange={
+                        handleChange
+                      }
                       className="
                         w-full rounded-xl
                         border border-white/10
@@ -643,10 +845,16 @@ export default function ToolsPage() {
                       "
                     >
                       {toolCategories.map(
-                        (category) => (
+                        (
+                          category,
+                        ) => (
                           <option
-                            key={category}
-                            value={category}
+                            key={
+                              category
+                            }
+                            value={
+                              category
+                            }
                             className="bg-black text-white"
                           >
                             {category.replaceAll(
@@ -669,8 +877,12 @@ export default function ToolsPage() {
                       type="number"
                       min="0"
                       name="sortOrder"
-                      value={form.sortOrder}
-                      onChange={handleChange}
+                      value={
+                        form.sortOrder
+                      }
+                      onChange={
+                        handleChange
+                      }
                       className="
                         w-full rounded-xl
                         border border-white/10
@@ -687,8 +899,12 @@ export default function ToolsPage() {
                 <label className="flex cursor-pointer items-center gap-3 text-sm text-white/60">
                   <input
                     type="checkbox"
-                    checked={form.isActive}
-                    onChange={handleActiveChange}
+                    checked={
+                      form.isActive
+                    }
+                    onChange={
+                      handleActiveChange
+                    }
                     className="h-4 w-4 accent-white"
                   />
 
@@ -706,7 +922,9 @@ export default function ToolsPage() {
               >
                 <button
                   type="button"
-                  onClick={closeModal}
+                  onClick={
+                    closeModal
+                  }
                   disabled={saving}
                   className="
                     rounded-xl
@@ -751,3 +969,4 @@ export default function ToolsPage() {
     </div>
   );
 }
+

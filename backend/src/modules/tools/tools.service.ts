@@ -1,12 +1,15 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 
 import { PrismaService } from '../../prisma/prisma.service';
-
 import { CreateToolDto, UpdateToolDto } from './dto/tool.dto';
+import { CloudinaryService } from '../../helpers/cloudinary/cloudanry.service';
 
 @Injectable()
 export class ToolsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly cloudinaryService: CloudinaryService,
+  ) {}
 
   async findAll() {
     return this.prisma.tool.findMany({
@@ -20,6 +23,7 @@ export class ToolsService {
         description: true,
         category: true,
         sortOrder: true,
+        isActive: true,
       },
       orderBy: [
         {
@@ -32,10 +36,34 @@ export class ToolsService {
     });
   }
 
-  async create(userId: string, createToolDto: CreateToolDto) {
+  async create(
+    userId: string,
+    createToolDto: CreateToolDto,
+    logo?: Express.Multer.File,
+  ) {
+    let logoUrl: string | undefined;
+
+    if (logo) {
+      const uploaded = await this.cloudinaryService.uploadImage(
+        logo,
+        'portfolio/tools',
+      );
+
+      logoUrl = uploaded.url;
+    }
+
     return this.prisma.tool.create({
       data: {
-        ...createToolDto,
+        name: createToolDto.name,
+        description: createToolDto.description,
+        category: createToolDto.category,
+        sortOrder: createToolDto.sortOrder ?? 0,
+        isActive: createToolDto.isActive ?? true,
+
+        ...(logoUrl && {
+          logo: logoUrl,
+        }),
+
         user: {
           connect: {
             id: userId,
@@ -59,15 +87,52 @@ export class ToolsService {
     return tool;
   }
 
-  async update(id: string, updateToolDto: UpdateToolDto) {
+  async update(
+    id: string,
+    updateToolDto: UpdateToolDto,
+    logo?: Express.Multer.File,
+  ) {
     await this.findOne(id);
+
+    let logoUrl: string | undefined;
+
+    if (logo) {
+      const uploaded = await this.cloudinaryService.uploadImage(
+        logo,
+        'portfolio/tools',
+      );
+
+      logoUrl = uploaded.url;
+    }
 
     return this.prisma.tool.update({
       where: {
         id,
       },
       data: {
-        ...updateToolDto,
+        ...(updateToolDto.name !== undefined && {
+          name: updateToolDto.name,
+        }),
+
+        ...(updateToolDto.description !== undefined && {
+          description: updateToolDto.description,
+        }),
+
+        ...(updateToolDto.category !== undefined && {
+          category: updateToolDto.category,
+        }),
+
+        ...(updateToolDto.sortOrder !== undefined && {
+          sortOrder: updateToolDto.sortOrder,
+        }),
+
+        ...(updateToolDto.isActive !== undefined && {
+          isActive: updateToolDto.isActive,
+        }),
+
+        ...(logoUrl && {
+          logo: logoUrl,
+        }),
       },
     });
   }
