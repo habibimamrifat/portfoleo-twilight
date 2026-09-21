@@ -19,6 +19,7 @@ import { RouteFor, routeTypeObj } from '../../decorators/route.decorator';
 import { CurrentUser } from '../../decorators/current-user.decorator';
 
 import { CreateBlogDto, UpdateBlogDto } from './dto/blog.dto';
+import { ResponseMessage } from '../../decorators/response-message.decorator';
 
 @Controller('blog-posts')
 export class BlogController {
@@ -36,11 +37,13 @@ export class BlogController {
     };
   }
 
-  @Get('slug/:slug')
+  @Get('blog/:id')
   @RouteFor(routeTypeObj.PUBLIC)
-  async findPublicBySlug(@Param('slug') slug: string) {
+  @ResponseMessage('Blog post retrieved successfully')
+  async findPublicById(@Param('id') id: string) {
+    console.log('i am hit for single blog');
     return {
-      data: await this.blogService.findPublicBySlug(slug),
+      data: await this.blogService.findPublicById(id),
     };
   }
 

@@ -55,7 +55,7 @@ export class ProjectsController {
   }
 
   @Get(':id')
-  @RouteFor(routeTypeObj.ADMIN)
+  @RouteFor(routeTypeObj.PUBLIC)
   @ResponseMessage('Project retrieved successfully')
   findOne(@Param('id') id: string) {
     return this.projectsService.findOne(id);

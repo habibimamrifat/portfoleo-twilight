@@ -46,10 +46,10 @@ export class BlogService {
     });
   }
 
-  async findPublicBySlug(slug: string) {
+  async findPublicById(id: string) {
     const blog = await this.prisma.blogPost.findFirst({
       where: {
-        slug,
+        id,
         status: BlogStatus.PUBLISHED,
       },
 
