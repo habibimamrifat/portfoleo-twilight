@@ -71,7 +71,7 @@ const navItems = [
   },
   {
     name: "Blog",
-    href: "/blog",
+    href: "#blog",
     icon: BookOpen,
   },
   {

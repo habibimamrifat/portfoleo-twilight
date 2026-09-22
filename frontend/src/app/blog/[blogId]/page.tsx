@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { use, useEffect, useState } from "react";
 import {
   ArrowLeft,
   CalendarDays,
@@ -25,7 +25,6 @@ type BlogPost = {
   status: string;
   publishedAt?: string | null;
   createdAt: string;
-  updatedAt: string;
 };
 
 type BlogPageProps = {
@@ -37,6 +36,8 @@ type BlogPageProps = {
 export default function BlogPostPage({
   params,
 }: BlogPageProps) {
+  const { blogId } = use(params);
+
   const [post, setPost] =
     useState<BlogPost | null>(null);
 
@@ -46,60 +47,34 @@ export default function BlogPostPage({
   const [error, setError] =
     useState<string | null>(null);
 
+  const [refreshComments, setRefreshComments] =
+    useState(0);
+
   useEffect(() => {
-    const fetchPost = async () => {
+    const loadBlog = async () => {
       try {
-        setLoading(true);
         setError(null);
-
-        const { blogId } = await params;
-
-        console.log("Blog ID:", blogId);
-
-        if (!blogId) {
-          throw new Error(
-            "Blog post ID is missing from the URL.",
-          );
-        }
 
         const response = await getApi(
           `/blog-posts/blog/${blogId}`,
         );
 
-        console.log(
-          "Blog response:",
-          response,
-        );
-
         if (!response.ok) {
-          throw new Error(
+          setError(
             "Failed to load blog post.",
           );
+          return;
         }
 
-        const result =
-          await response.json();
+        const result = await response.json();
 
-        console.log(
-          "FULL BLOG RESULT:",
-          result,
-        );
+        const blog =
+          result?.data?.data ?? result?.data;
 
-        console.log(
-          "BLOG DATA:",
-          result?.data,
-        );
-
-        if (!result?.data) {
-          throw new Error(
-            "Blog post data was not returned by the server.",
-          );
-        }
-
-        setPost(result.data);
+        setPost(blog);
       } catch (error) {
         console.error(
-          "Failed to fetch blog post:",
+          "Failed to load blog:",
           error,
         );
 
@@ -113,123 +88,76 @@ export default function BlogPostPage({
       }
     };
 
-    fetchPost();
-  }, [params]);
+    loadBlog();
+  }, [blogId]);
 
-  /*
-   * =========================
-   * LOADING
-   * =========================
-   */
+  const handleCommentSubmitted = () => {
+    setRefreshComments(
+      (previous) => previous + 1,
+    );
+  };
 
   if (loading) {
     return (
-      <main className="flex min-h-screen items-center justify-center px-6">
-        <div className="flex items-center gap-3 text-sm text-white/50">
-          <Loader2
-            size={18}
-            className="animate-spin"
-          />
-
-          Loading article...
+      <main className="min-h-screen px-6 py-16">
+        <div className="flex min-h-[70vh] items-center justify-center">
+          <div className="flex items-center gap-3 text-white/50">
+            <Loader2
+              size={20}
+              className="animate-spin"
+            />
+            <span>Loading blog...</span>
+          </div>
         </div>
       </main>
     );
   }
 
-  /*
-   * =========================
-   * ERROR
-   * =========================
-   */
-
   if (error || !post) {
     return (
-      <main className="flex min-h-screen items-center justify-center px-6">
-        <Card className="w-full max-w-lg p-8 text-center">
-          <h1 className="text-xl font-semibold text-white">
-            Blog post not found
-          </h1>
+      <main className="min-h-screen px-6 py-16">
+        <div className="flex min-h-[70vh] items-center justify-center">
+          <Card className="w-full max-w-lg p-8 text-center">
+            <h1 className="text-xl font-semibold text-white">
+              Blog post not found
+            </h1>
 
-          <p className="mt-3 text-sm text-white/40">
-            {error ||
-              "The article you're looking for doesn't exist."}
-          </p>
+            <p className="mt-3 text-sm text-white/40">
+              {error ||
+                "Unable to load this blog post."}
+            </p>
 
-          <Link
-            href="/blog"
-            className="mt-6 inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-5 py-3 text-sm text-white/70 transition hover:bg-white/10 hover:text-white"
-          >
-            <ArrowLeft size={16} />
-
-            Back to Blog
-          </Link>
-        </Card>
+            <Link
+              href="/portfolio#blog"
+              className="mt-6 inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-5 py-3 text-sm text-white/70 transition hover:bg-white/10 hover:text-white"
+            >
+              <ArrowLeft size={16} />
+              Back to Blog
+            </Link>
+          </Card>
+        </div>
       </main>
     );
   }
 
   const publishedDate =
-    post.publishedAt ||
-    post.createdAt;
-
-  /*
-   * =========================
-   * BLOG PAGE
-   * =========================
-   */
+    post.publishedAt || post.createdAt;
 
   return (
-    <main className="px-6 py-20 lg:px-10">
-      <article className="mx-auto max-w-4xl">
-
-        {/* Back */}
-
+    <main className="h-screen px-6 py-16 lg:px-10">
+    <div>
+        <article className="mx-auto max-w-4xl">
         <Link
-          href="/blog"
+          href="/portfolio#blog"
           className="mb-8 inline-flex items-center gap-2 text-sm text-white/40 transition hover:text-white"
         >
           <ArrowLeft size={16} />
-
           Back to Blog
         </Link>
 
-        {/* Header */}
-
-        <header>
-          <div className="flex items-center gap-2 text-sm text-white/40">
-            <CalendarDays size={15} />
-
-            <time dateTime={publishedDate}>
-              {new Date(
-                publishedDate,
-              ).toLocaleDateString(
-                undefined,
-                {
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                },
-              )}
-            </time>
-          </div>
-
-          <h1 className="mt-4 text-4xl font-bold leading-tight text-white sm:text-5xl lg:text-6xl">
-            {post.title}
-          </h1>
-
-          {post.excerpt && (
-            <p className="mt-6 max-w-3xl text-lg leading-8 text-white/50">
-              {post.excerpt}
-            </p>
-          )}
-        </header>
-
-        {/* Cover Image */}
-
         {post.coverImage && (
-          <Card className="mt-10 overflow-hidden p-0">
-            <div className="relative aspect-video w-full">
+          <Card className="overflow-hidden p-0">
+            <div className="relative aspect-[16/7] w-full">
               <Image
                 src={post.coverImage}
                 alt={post.title}
@@ -242,27 +170,54 @@ export default function BlogPostPage({
           </Card>
         )}
 
-        {/* Content */}
+        <h1 className="mt-8 text-3xl font-bold leading-tight text-white sm:text-4xl lg:text-5xl">
+          {post.title}
+        </h1>
 
-        <Card className="mt-10 p-6 sm:p-8 lg:p-10">
+        <div className="mt-4 flex items-center gap-2 text-sm text-white/35">
+          <CalendarDays size={14} />
+
+          <time dateTime={publishedDate}>
+            {new Date(
+              publishedDate,
+            ).toLocaleDateString(undefined, {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            })}
+          </time>
+        </div>
+
+        {post.excerpt && (
+          <p className="mt-6 text-base leading-7 text-white/50 sm:text-lg sm:leading-8">
+            {post.excerpt}
+          </p>
+        )}
+
+        <Card className="mt-8 p-6 sm:p-8">
           <div className="whitespace-pre-wrap text-sm leading-8 text-white/70 sm:text-base">
             {post.content}
           </div>
         </Card>
 
-        {/* Comments */}
-
-        <div className="mt-14">
+        <div className="mt-10 mb-60">
           <BlogCommentList
             blogId={post.id}
             isAdmin={false}
+            refreshTrigger={refreshComments}
           />
+        </div>
 
+        <div className="mt-8 pb-16 fixed bottom-0 z-50">
           <WriteBlogComment
             blogId={post.id}
+            onCommentSubmitted={
+              handleCommentSubmitted
+            }
           />
         </div>
       </article>
+    </div>
     </main>
   );
 }

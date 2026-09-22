@@ -90,7 +90,9 @@ export default function WriteBlogComment({
     event.preventDefault();
 
     if (!blogId) {
-      setError("Blog post could not be identified.");
+      setError(
+        "Blog post could not be identified.",
+      );
       return;
     }
 
@@ -130,14 +132,20 @@ export default function WriteBlogComment({
         );
       }
 
+      /*
+       * Comment was successfully created.
+       *
+       * Tell the parent BlogPostPage to refresh
+       * the BlogCommentList.
+       */
+      onCommentSubmitted?.();
+
       setSuccess(
         result?.message ||
           "Your comment has been submitted and is awaiting approval.",
       );
 
       setForm(initialForm);
-
-      onCommentSubmitted?.();
     } catch (error) {
       console.error(
         "Failed to submit blog comment:",
@@ -157,6 +165,7 @@ export default function WriteBlogComment({
   return (
     <>
       {/* Trigger */}
+
       <div className="mt-8 flex justify-center">
         <button
           type="button"
@@ -164,14 +173,17 @@ export default function WriteBlogComment({
           className="flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-5 py-3 text-sm font-medium text-white backdrop-blur-md transition hover:bg-white/20"
         >
           <MessageCircle size={17} />
+
           Write a Comment
         </button>
       </div>
 
       {/* Modal */}
+
       {isOpen && (
         <div className="fixed inset-0 z-[9999] flex min-h-screen items-center justify-center overflow-y-auto bg-black/60 px-4 py-8 backdrop-blur-xl sm:px-6">
           {/* Close */}
+
           <button
             type="button"
             onClick={closeModal}
@@ -185,6 +197,7 @@ export default function WriteBlogComment({
           <div className="w-full max-w-xl">
             <Card className="relative p-6 sm:p-8">
               {/* Header */}
+
               <div className="mb-7">
                 <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/5">
                   <MessageCircle
@@ -204,6 +217,7 @@ export default function WriteBlogComment({
               </div>
 
               {/* Success */}
+
               {success && (
                 <div className="mb-5 rounded-xl border border-green-400/20 bg-green-500/10 px-4 py-3 text-sm leading-6 text-green-300">
                   {success}
@@ -211,6 +225,7 @@ export default function WriteBlogComment({
               )}
 
               {/* Error */}
+
               {error && (
                 <div className="mb-5 rounded-xl border border-red-400/20 bg-red-500/10 px-4 py-3 text-sm leading-6 text-red-300">
                   {error}
@@ -222,6 +237,7 @@ export default function WriteBlogComment({
                 className="space-y-5"
               >
                 {/* Name + Email */}
+
                 <div className="grid gap-5 sm:grid-cols-2">
                   <div>
                     <label
@@ -250,6 +266,7 @@ export default function WriteBlogComment({
                       className="mb-2 block text-sm text-white/60"
                     >
                       Email
+
                       <span className="ml-2 text-xs text-white/25">
                         Optional
                       </span>
@@ -270,6 +287,7 @@ export default function WriteBlogComment({
                 </div>
 
                 {/* Comment */}
+
                 <div>
                   <label
                     htmlFor="blog-comment-message"
@@ -292,6 +310,7 @@ export default function WriteBlogComment({
                 </div>
 
                 {/* Actions */}
+
                 <div className="flex items-center justify-end gap-3 pt-2">
                   <button
                     type="button"
@@ -313,11 +332,13 @@ export default function WriteBlogComment({
                           size={16}
                           className="animate-spin"
                         />
+
                         Submitting...
                       </>
                     ) : (
                       <>
                         <Send size={16} />
+
                         Submit Comment
                       </>
                     )}
