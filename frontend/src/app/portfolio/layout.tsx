@@ -1,9 +1,11 @@
 import Navbar from "@/components/Navigation";
 import Container from "@/components/containers/Container";
 import Identity from "@/components/Identity";
-import TopNavigation from "@/components/common/TopNavigation";
+
 import { AppProvider } from "@/components/context/AppContext";
-import MobileSideNav from "@/components/common/MobileSideNav";
+import TopNavigation from "@/components/layout/TopNavigation";
+import MobileSideNav from "@/components/layout/MobileSideNav";
+
 
 export default function PortfolioLayout({
   children,

@@ -1,4 +1,4 @@
-import Card from "@/components/common/Card";
+import Card from "@/components/common/util/Card";
 
 export default function DashboardPage() {
   return (

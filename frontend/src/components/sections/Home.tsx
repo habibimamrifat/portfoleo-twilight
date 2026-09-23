@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import Card from "../common/Card";
+import Card from "../common/util/Card";
 import {
   ArrowDown,
   ArrowRight,

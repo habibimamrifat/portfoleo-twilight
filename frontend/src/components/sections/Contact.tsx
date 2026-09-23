@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Mail, Send, X, Loader2 } from "lucide-react";
 
-import Card from "../common/Card";
+import Card from "../common/util/Card";
 import { callApi } from "@/api/callApi";
 
 type ContactForm = {

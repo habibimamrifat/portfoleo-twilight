@@ -1,6 +1,6 @@
 "use client";
 
-import Card from "../common/Card";
+import Card from "../common/util/Card";
 import { Quote } from "lucide-react";
 import { useEffect, useState } from "react";
 

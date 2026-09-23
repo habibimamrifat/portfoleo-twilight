@@ -2,17 +2,18 @@
 
 import { useState } from "react";
 import {
+  CheckCircle2,
   Loader2,
   MessageCircle,
   Send,
   X,
 } from "lucide-react";
 
-import Card from "@/components/common/Card";
+import Card from "@/components/common/util/Card";
 import { callApi } from "@/api/callApi";
 
-type WriteProjectCommentProps = {
-  projectId: string;
+type WriteBlogCommentProps = {
+  blogId: string;
   onCommentSubmitted?: () => void;
 };
 
@@ -28,10 +29,10 @@ const initialForm: CommentForm = {
   comment: "",
 };
 
-export default function WriteProjectComment({
-  projectId,
+export default function WriteBlogComment({
+  blogId,
   onCommentSubmitted,
-}: WriteProjectCommentProps) {
+}: WriteBlogCommentProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   const [form, setForm] =
@@ -39,11 +40,13 @@ export default function WriteProjectComment({
 
   const [sending, setSending] = useState(false);
 
-  const [error, setError] =
-    useState<string | null>(null);
+  const [error, setError] = useState<string | null>(
+    null,
+  );
 
-  const [success, setSuccess] =
-    useState<string | null>(null);
+  const [success, setSuccess] = useState<
+    string | null
+  >(null);
 
   const openModal = () => {
     setError(null);
@@ -87,9 +90,9 @@ export default function WriteProjectComment({
   ) => {
     event.preventDefault();
 
-    if (!projectId) {
+    if (!blogId) {
       setError(
-        "Project could not be identified.",
+        "Blog post could not be identified.",
       );
       return;
     }
@@ -110,12 +113,13 @@ export default function WriteProjectComment({
       setSuccess(null);
 
       const response = await callApi(
-        "/project-comments",
+        "/blog-comments",
         "POST",
         {
-          projectId,
+          blogPostId: blogId,
           name: form.name.trim(),
-          email: form.email.trim() || undefined,
+          email:
+            form.email.trim() || undefined,
           comment: form.comment.trim(),
         },
       );
@@ -129,17 +133,16 @@ export default function WriteProjectComment({
         );
       }
 
+      onCommentSubmitted?.();
+
       setSuccess(
-        result?.message ||
-          "Your comment has been submitted and is awaiting approval.",
+        "Your comment has been submitted and is waiting for approval.",
       );
 
       setForm(initialForm);
-
-      onCommentSubmitted?.();
     } catch (error) {
       console.error(
-        "Failed to submit project comment:",
+        "Failed to submit blog comment:",
         error,
       );
 
@@ -155,19 +158,21 @@ export default function WriteProjectComment({
 
   return (
     <>
-      {/* Write Comment Button */}
-      <div className="mt-8 flex justify-center">
-        <button
-          type="button"
-          onClick={openModal}
-          className="flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-5 py-3 text-sm font-medium text-white backdrop-blur-md transition hover:bg-white/20"
-        >
-          <MessageCircle size={17} />
-          Write a Comment
-        </button>
-      </div>
+      {/* Fixed Write Comment Button */}
+      {!isOpen && (
+        <div className="pointer-events-none fixed bottom-6 left-0 right-0 z-50 flex justify-center px-4">
+          <button
+            type="button"
+            onClick={openModal}
+            className="pointer-events-auto flex items-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-6 py-3 text-sm font-medium text-white shadow-2xl backdrop-blur-xl transition-all duration-300 hover:border-white/30 hover:bg-white/20 active:scale-95"
+          >
+            <MessageCircle size={17} />
+            Write a Comment
+          </button>
+        </div>
+      )}
 
-      {/* Popup */}
+      {/* Comment Modal */}
       {isOpen && (
         <div className="fixed inset-0 z-[9999] flex min-h-screen items-center justify-center overflow-y-auto bg-black/60 px-4 py-8 backdrop-blur-xl sm:px-6">
           {/* Close Button */}
@@ -197,25 +202,41 @@ export default function WriteProjectComment({
                 </h2>
 
                 <p className="mt-2 text-sm leading-6 text-white/40">
-                  Share your thoughts about this project.
+                  Share your thoughts about this
+                  article.
                 </p>
               </div>
 
-              {/* Success */}
+              {/* Success Message */}
               {success && (
-                <div className="mb-5 rounded-xl border border-green-400/20 bg-green-500/10 px-4 py-3 text-sm leading-6 text-green-300">
-                  {success}
+                <div className="mb-5 flex items-start gap-3 rounded-xl border border-green-400/20 bg-green-500/10 px-4 py-3 text-sm leading-6 text-green-300">
+                  <CheckCircle2
+                    size={18}
+                    className="mt-0.5 shrink-0"
+                  />
+
+                  <div>
+                    <p className="font-medium">
+                      Comment submitted successfully
+                    </p>
+
+                    <p className="mt-1 text-green-300/70">
+                      Your comment has been received
+                      and is waiting for approval. It
+                      will appear once it has been
+                      approved.
+                    </p>
+                  </div>
                 </div>
               )}
 
-              {/* Error */}
+              {/* Error Message */}
               {error && (
                 <div className="mb-5 rounded-xl border border-red-400/20 bg-red-500/10 px-4 py-3 text-sm leading-6 text-red-300">
                   {error}
                 </div>
               )}
 
-              {/* Form */}
               <form
                 onSubmit={handleSubmit}
                 className="space-y-5"
@@ -225,14 +246,14 @@ export default function WriteProjectComment({
                   {/* Name */}
                   <div>
                     <label
-                      htmlFor="project-comment-name"
+                      htmlFor="blog-comment-name"
                       className="mb-2 block text-sm text-white/60"
                     >
                       Name
                     </label>
 
                     <input
-                      id="project-comment-name"
+                      id="blog-comment-name"
                       name="name"
                       type="text"
                       value={form.name}
@@ -247,17 +268,18 @@ export default function WriteProjectComment({
                   {/* Email */}
                   <div>
                     <label
-                      htmlFor="project-comment-email"
+                      htmlFor="blog-comment-email"
                       className="mb-2 block text-sm text-white/60"
                     >
                       Email
+
                       <span className="ml-2 text-xs text-white/25">
                         Optional
                       </span>
                     </label>
 
                     <input
-                      id="project-comment-email"
+                      id="blog-comment-email"
                       name="email"
                       type="email"
                       value={form.email}
@@ -273,14 +295,14 @@ export default function WriteProjectComment({
                 {/* Comment */}
                 <div>
                   <label
-                    htmlFor="project-comment-message"
+                    htmlFor="blog-comment-message"
                     className="mb-2 block text-sm text-white/60"
                   >
                     Comment
                   </label>
 
                   <textarea
-                    id="project-comment-message"
+                    id="blog-comment-message"
                     name="comment"
                     value={form.comment}
                     onChange={handleChange}
@@ -292,7 +314,7 @@ export default function WriteProjectComment({
                   />
                 </div>
 
-                {/* Buttons */}
+                {/* Actions */}
                 <div className="flex items-center justify-end gap-3 pt-2">
                   <button
                     type="button"

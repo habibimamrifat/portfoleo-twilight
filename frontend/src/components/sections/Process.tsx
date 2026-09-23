@@ -1,6 +1,6 @@
 "use client";
 
-import Card from "../common/Card";
+import Card from "../common/util/Card";
 import { useEffect, useState } from "react";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL;

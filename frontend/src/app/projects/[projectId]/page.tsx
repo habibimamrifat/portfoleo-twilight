@@ -11,12 +11,12 @@ import {
 } from "lucide-react";
 import { FaGithub } from "react-icons/fa";
 
-import Card from "@/components/common/Card";
+import Card from "@/components/common/util/Card";
 
-import WriteProjectComment from "@/components/common/WriteProjectComment";
+import WriteProjectComment from "@/components/common/projects/WriteProjectComment";
 
 import { getApi } from "@/api/getapi";
-import ProjectCommentList from "@/components/common/ProjectComment";
+import ProjectCommentList from "@/components/common/projects/ProjectComment";
 
 type Project = {
   id: string;

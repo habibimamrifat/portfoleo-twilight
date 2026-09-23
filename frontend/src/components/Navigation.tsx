@@ -14,8 +14,8 @@ import {
   Mail,
 } from "lucide-react";
 
-import CustomButton from "./common/Button";
-import Card from "./common/Card";
+import CustomButton from "./common/util/Button";
+import Card from "./common/util/Card";
 
 const navItems = [
   {

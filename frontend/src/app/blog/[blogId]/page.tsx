@@ -9,9 +9,9 @@ import {
   Loader2,
 } from "lucide-react";
 
-import Card from "@/components/common/Card";
-import BlogCommentList from "@/components/common/BlogCommentList";
-import WriteBlogComment from "@/components/common/WriteBlogComment";
+import Card from "@/components/common/util/Card";
+import BlogCommentList from "@/components/common/blog/BlogCommentList";
+import WriteBlogComment from "@/components/common/blog/WriteBlogComment";
 
 import { getApi } from "@/api/getapi";
 
@@ -200,6 +200,8 @@ export default function BlogPostPage({
           </div>
         </Card>
 
+
+
         <div className="mt-10 mb-60">
           <BlogCommentList
             blogId={post.id}
@@ -216,6 +218,8 @@ export default function BlogPostPage({
             }
           />
         </div>
+
+
       </article>
     </div>
     </main>

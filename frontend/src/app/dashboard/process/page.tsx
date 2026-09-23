@@ -10,7 +10,7 @@ import {
   Workflow,
 } from "lucide-react";
 
-import Card from "@/components/common/Card";
+import Card from "@/components/common/util/Card";
 import { callApi } from "@/api/callApi";
 import { getApi } from "@/api/getapi";
 

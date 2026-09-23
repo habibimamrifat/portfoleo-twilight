@@ -1,7 +1,7 @@
 
 "use client";
 
-import Card from "../common/Card";
+import Card from "../common/util/Card";
 import { useEffect, useState } from "react";
 
 import { getApi } from "@/api/getapi";

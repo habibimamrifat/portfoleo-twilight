@@ -1,3 +1,4 @@
+
 "use client";
 
 import Image from "next/image";
@@ -16,7 +17,7 @@ import {
   X,
 } from "lucide-react";
 
-import Card from "@/components/common/Card";
+import Card from "@/components/common/util/Card";
 import { getApi } from "@/api/getapi";
 import { callApi } from "@/api/callApi";
 
@@ -861,8 +862,6 @@ export default function BlogPage() {
           {/* STATS */}
 
           <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
-            {/* TOTAL */}
-
             <Card className="p-5">
               <div className="flex items-center justify-between">
                 <div>
@@ -882,8 +881,6 @@ export default function BlogPage() {
                 />
               </div>
             </Card>
-
-            {/* PUBLISHED */}
 
             <Card className="p-5">
               <div className="flex items-center justify-between">
@@ -905,8 +902,6 @@ export default function BlogPage() {
               </div>
             </Card>
 
-            {/* DRAFTS */}
-
             <Card className="p-5">
               <div className="flex items-center justify-between">
                 <div>
@@ -926,8 +921,6 @@ export default function BlogPage() {
                 />
               </div>
             </Card>
-
-            {/* ARCHIVED */}
 
             <Card className="p-5">
               <div className="flex items-center justify-between">
@@ -964,8 +957,6 @@ export default function BlogPage() {
               </p>
             </div>
 
-            {/* LOADING */}
-
             {loading ? (
               <div className="flex min-h-40 items-center justify-center">
                 <Loader2
@@ -974,7 +965,6 @@ export default function BlogPage() {
                 />
               </div>
             ) : blogs.length === 0 ? (
-              /* EMPTY */
               <div className="flex min-h-40 flex-col items-center justify-center text-center">
                 <BookOpen
                   size={30}
@@ -996,7 +986,6 @@ export default function BlogPage() {
                 </button>
               </div>
             ) : (
-              /* BLOGS */
               <div className="space-y-3">
                 {blogs.map(
                   (blog, index) => {
@@ -1005,10 +994,6 @@ export default function BlogPage() {
                         blog.coverImage,
                       );
 
-                    /*
-                     * Every rendered blog now has
-                     * a guaranteed unique key.
-                     */
                     const blogKey =
                       blog.id ||
                       `${blog.slug}-${blog.createdAt}-${index}`;
@@ -1091,7 +1076,7 @@ export default function BlogPage() {
                           {blog.status ===
                             "PUBLISHED" && (
                             <a
-                              href={`/blog/${blog.slug}`}
+                              href={`/blog/${blog.id}`}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="flex h-10 items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 text-sm text-white/50 transition hover:bg-white/10 hover:text-white"
@@ -1463,8 +1448,6 @@ export default function BlogPage() {
             {/* SUBMIT */}
 
             <div className="flex justify-end gap-3 pt-2">
-              {/* CANCEL */}
-
               <button
                 type="button"
                 onClick={resetForm}
@@ -1474,8 +1457,6 @@ export default function BlogPage() {
                 <X size={17} />
                 Cancel
               </button>
-
-              {/* SAVE */}
 
               <button
                 type="submit"
@@ -1506,3 +1487,4 @@ export default function BlogPage() {
     </div>
   );
 }
+

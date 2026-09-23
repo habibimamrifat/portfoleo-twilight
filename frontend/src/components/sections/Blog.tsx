@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { ArrowUpRight, ImagePlus, Loader2 } from "lucide-react";
 
-import Card from "../common/Card";
+import Card from "../common/util/Card";
 import { getApi } from "@/api/getapi";
 
 type Blog = {

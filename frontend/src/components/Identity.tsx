@@ -1,8 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import Card from "./common/Card";
-import PopupCard from "./common/PopUp";
+import Card from "./common/util/Card";
+import PopupCard from "./common/util/PopUp";
 import { useApp } from "./context/AppContext";
 import { useEffect, useState } from "react";
 import {

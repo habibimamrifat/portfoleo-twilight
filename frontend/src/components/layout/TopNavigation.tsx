@@ -3,8 +3,9 @@
 
 import Image from "next/image";
 import { Menu } from "lucide-react";
-import { useApp } from "../context/AppContext";
+
 import { hexToRgba } from "@/util/color";
+import { useApp } from "@/components/context/AppContext";
 
 
 interface TopNavigationSettings {

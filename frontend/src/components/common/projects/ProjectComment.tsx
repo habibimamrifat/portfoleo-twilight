@@ -11,7 +11,7 @@ import {
   X,
 } from "lucide-react";
 
-import Card from "@/components/common/Card";
+import Card from "@/components/common/util/Card";
 import { getApi } from "@/api/getapi";
 import { callApi } from "@/api/callApi";
 
