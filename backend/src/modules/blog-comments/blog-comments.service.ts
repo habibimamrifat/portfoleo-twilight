@@ -157,4 +157,27 @@ export class BlogCommentsService {
       },
     });
   }
+
+  async findAllAdminByPost(postId: string) {
+    return this.prisma.blogComment.findMany({
+      where: {
+        blogPostId: postId,
+      },
+
+      select: {
+        id: true,
+        blogPostId: true,
+        name: true,
+        email: true,
+        comment: true,
+        status: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+  }
 }

@@ -58,6 +58,14 @@ export class BlogCommentsController {
     };
   }
 
+  @Get('admin/post/:postId')
+  @RouteFor(routeTypeObj.ADMIN)
+  async findAllAdminByPost(@Param('postId') postId: string) {
+    return {
+      data: await this.blogCommentsService.findAllAdminByPost(postId),
+    };
+  }
+
   @Get(':id')
   @RouteFor(routeTypeObj.ADMIN)
   async findOneAdmin(@Param('id') id: string) {
