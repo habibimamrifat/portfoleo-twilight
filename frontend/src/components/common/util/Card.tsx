@@ -29,8 +29,8 @@ export default function Card({
         rounded-3xl
         border
         border-white/20
-        shadow-[0_25px_80px_rgba(0,0,0,0.45)]
-        backdrop-blur-2xl
+        shadow-[0_5px_8px_rgba(0,0,0,0.5)]
+        backdrop-blur-xs
         ${className}
       `}
       style={{

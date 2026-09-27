@@ -1,10 +1,10 @@
-
 "use client";
 
 import Card from "../common/util/Card";
 import { useEffect, useState } from "react";
 
 import { getApi } from "@/api/getapi";
+import Appear from "@/components/common/animation/Appear";
 
 type Tool = {
   id: string;
@@ -92,66 +92,78 @@ export default function Tools() {
 
   return (
     <section
-      id="tools"
+      id="stack"
       className="px-6 py-20 lg:px-10"
     >
       <div className="space-y-6">
-        <div>
-          <p className="text-sm uppercase tracking-[0.25em] text-blue-400">
-            Tools
-          </p>
+        {/* Section Heading */}
+        <Appear>
+          <div>
+            <p className="text-sm uppercase tracking-[0.25em] text-blue-400">
+              Tools
+            </p>
 
-          <h2 className="mt-2 text-3xl font-bold">
-            Tools I work with.
-          </h2>
-        </div>
+            <h2 className="mt-2 text-3xl font-bold">
+              Tools I work with.
+            </h2>
+          </div>
+        </Appear>
 
         {loading ? (
-          <div className="py-10 text-sm text-white/40">
-            Loading tools...
-          </div>
+          <Appear delay={0.2}>
+            <div className="py-10 text-sm text-white/40">
+              Loading tools...
+            </div>
+          </Appear>
         ) : tools.length === 0 ? (
-          <div className="py-10 text-sm text-white/40">
-            No tools available.
-          </div>
+          <Appear delay={0.2}>
+            <div className="py-10 text-sm text-white/40">
+              No tools available.
+            </div>
+          </Appear>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2">
             {Object.entries(groupedTools).map(
-              ([category, categoryTools]) => (
-                <Card
+              ([category, categoryTools], categoryIndex) => (
+                <Appear
                   key={category}
-                  className="p-5"
+                  direction="none"
+                  delay={categoryIndex * 0.3}
                 >
-                  <h3 className="mb-4 text-sm font-semibold text-white/70">
-                    {categoryNames[category] ?? category}
-                  </h3>
+                  <Card className="min-h-[140px] p-5">
+                    <h3 className="mb-4 text-sm font-semibold text-white/70">
+                      {categoryNames[category] ?? category}
+                    </h3>
 
-                  <div className="flex flex-wrap gap-2">
-                    {categoryTools.map((tool) => (
-                      <Card
-                        key={tool.id}
-                        className="
-                          flex items-center gap-2
-                          px-3 py-2
-                        "
-                      >
-                        {tool.logo ? (
-                          <img
-                            src={tool.logo}
-                            alt={tool.name}
-                            className="h-4 w-4 object-contain"
-                          />
-                        ) : (
-                          <div className="h-4 w-4 rounded-sm bg-white/5" />
-                        )}
+                    <div className="flex flex-wrap gap-2">
+                      {categoryTools.map(
+                        (tool, toolIndex) => (
+                          <Appear
+                            key={tool.id}
+                            direction="none"
+                            delay={toolIndex * 0.15}
+                          >
+                            <Card className="flex items-center gap-2 px-3 py-2 transition duration-300 hover:bg-white/10">
+                              {tool.logo ? (
+                                <img
+                                  src={tool.logo}
+                                  alt={tool.name}
+                                  className="h-4 w-4 object-contain"
+                                />
+                              ) : (
+                                <div className="h-4 w-4 rounded-sm bg-white/5" />
+                              )}
 
-                        <span className="text-xs text-white/60">
-                          {tool.name}
-                        </span>
-                      </Card>
-                    ))}
-                  </div>
-                </Card>
+                              <span className="text-xs text-white/60">
+                                {tool.name}
+                              </span>
+                            </Card>
+                          </Appear>
+                        ),
+                      )}
+                    </div>
+                  </Card>
+                </Appear>
               ),
             )}
           </div>
@@ -160,4 +172,3 @@ export default function Tools() {
     </section>
   );
 }
-

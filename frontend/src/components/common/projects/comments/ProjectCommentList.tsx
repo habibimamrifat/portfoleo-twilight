@@ -11,21 +11,21 @@ import { getApi } from "@/api/getapi";
 import { callApi } from "@/api/callApi";
 import Appear from "@/components/common/animation/Appear";
 
-import BlogComment, {
-  BlogCommentData,
-} from "./EachBlogComment";
+import ProjectComment, {
+  ProjectCommentData,
+} from "./EachProjectComment";
 
-interface BlogCommentListProps {
-  blogId: string;
+interface ProjectCommentListProps {
+  projectId: string;
   isAdmin?: boolean;
 }
 
-export default function BlogCommentList({
-  blogId,
+export default function ProjectCommentList({
+  projectId,
   isAdmin = false,
-}: BlogCommentListProps) {
+}: ProjectCommentListProps) {
   const [comments, setComments] = useState<
-    BlogCommentData[]
+    ProjectCommentData[]
   >([]);
 
   const [loading, setLoading] = useState(true);
@@ -39,7 +39,7 @@ export default function BlogCommentList({
   >(null);
 
   useEffect(() => {
-    if (!blogId) {
+    if (!projectId) {
       return;
     }
 
@@ -51,8 +51,8 @@ export default function BlogCommentList({
         setError(null);
 
         const endpoint = isAdmin
-          ? `/blog-comments/admin/post/${blogId}`
-          : `/blog-comments/post/${blogId}`;
+          ? `/project-comments/admin/project/${projectId}`
+          : `/project-comments/project/${projectId}`;
 
         const response = await getApi(
           endpoint,
@@ -90,7 +90,7 @@ export default function BlogCommentList({
         }
 
         console.error(
-          "Failed to fetch blog comments:",
+          "Failed to fetch project comments:",
           error,
         );
 
@@ -113,7 +113,11 @@ export default function BlogCommentList({
     return () => {
       cancelled = true;
     };
-  }, [blogId, isAdmin]);
+  }, [projectId, isAdmin]);
+
+  /* =========================================================
+     UPDATE COMMENT STATUS
+     ========================================================= */
 
   const updateCommentStatus = async (
     commentId: string,
@@ -124,7 +128,7 @@ export default function BlogCommentList({
       setError(null);
 
       const response = await callApi(
-        `/blog-comments/${commentId}`,
+        `/project-comments/${commentId}`,
         "PATCH",
         {
           status,
@@ -153,7 +157,7 @@ export default function BlogCommentList({
       );
     } catch (error) {
       console.error(
-        "Failed to update comment:",
+        "Failed to update project comment:",
         error,
       );
 
@@ -166,6 +170,10 @@ export default function BlogCommentList({
       setActionLoading(null);
     }
   };
+
+  /* =========================================================
+     DELETE COMMENT
+     ========================================================= */
 
   const deleteComment = async (
     commentId: string,
@@ -183,7 +191,7 @@ export default function BlogCommentList({
       setError(null);
 
       const response = await callApi(
-        `/blog-comments/${commentId}`,
+        `/project-comments/${commentId}`,
         "DELETE",
         undefined,
         true,
@@ -205,7 +213,7 @@ export default function BlogCommentList({
       );
     } catch (error) {
       console.error(
-        "Failed to delete comment:",
+        "Failed to delete project comment:",
         error,
       );
 
@@ -219,6 +227,10 @@ export default function BlogCommentList({
     }
   };
 
+  /* =========================================================
+     LOADING
+     ========================================================= */
+
   if (loading) {
     return (
       <Card className="p-6">
@@ -227,6 +239,7 @@ export default function BlogCommentList({
             size={18}
             className="animate-spin"
           />
+
           Loading comments...
         </div>
       </Card>
@@ -235,7 +248,9 @@ export default function BlogCommentList({
 
   return (
     <section>
-      {/* COMMENTS HEADER */}
+      {/* =====================================================
+          COMMENTS HEADER
+          ===================================================== */}
 
       <Appear
         direction="bottom"
@@ -260,7 +275,9 @@ export default function BlogCommentList({
         </div>
       </Appear>
 
-      {/* ERROR */}
+      {/* =====================================================
+          ERROR
+          ===================================================== */}
 
       {error && (
         <Appear
@@ -274,7 +291,9 @@ export default function BlogCommentList({
         </Appear>
       )}
 
-      {/* EMPTY STATE */}
+      {/* =====================================================
+          EMPTY STATE
+          ===================================================== */}
 
       {comments.length === 0 ? (
         <Appear
@@ -297,14 +316,16 @@ export default function BlogCommentList({
 
               <p className="mt-2 max-w-sm text-sm leading-6 text-white/35">
                 {isAdmin
-                  ? "There are no comments on this blog post yet."
-                  : "Be the first to share your thoughts about this article."}
+                  ? "There are no comments on this project yet."
+                  : "Be the first to share your thoughts about this project."}
               </p>
             </div>
           </Card>
         </Appear>
       ) : (
-        /* COMMENTS */
+        /* =====================================================
+           COMMENTS
+           ===================================================== */
 
         <div className="space-y-4">
           {comments.map((comment, index) => (
@@ -314,7 +335,7 @@ export default function BlogCommentList({
               delay={index * 0.2}
               duration={0.6}
             >
-              <BlogComment
+              <ProjectComment
                 comment={comment}
                 isAdmin={isAdmin}
                 actionLoading={actionLoading}

@@ -6,8 +6,7 @@ import { FolderKanban, Loader2 } from "lucide-react";
 import Card from "@/components/common/util/Card";
 import { getApi } from "@/api/getapi";
 import ProjectCard from "./EachProjectCard";
-
-
+import Appear from "@/components/common/animation/Appear";
 
 export interface Project {
   id: string;
@@ -30,53 +29,63 @@ interface ProjectListProps {
 export default function ProjectList({
   isAdmin = false,
 }: ProjectListProps) {
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [projects, setProjects] =
+    useState<Project[]>([]);
 
-  const fetchProjects = useCallback(async () => {
-    try {
-      const response = await getApi(
-        "/projects",
-        isAdmin,
-      );
+  const [loading, setLoading] =
+    useState(true);
 
-      const result = await response.json();
+  const [error, setError] =
+    useState<string | null>(null);
 
-      if (!response.ok) {
-        throw new Error(
-          result?.message ||
-            "Failed to fetch projects.",
+  const fetchProjects = useCallback(
+    async () => {
+      try {
+        const response = await getApi(
+          "/projects",
+          isAdmin,
         );
-      }
 
-      const data = result?.data ?? result;
+        const result =
+          await response.json();
 
-      if (!Array.isArray(data)) {
-        throw new Error(
-          "Invalid projects response.",
+        if (!response.ok) {
+          throw new Error(
+            result?.message ||
+              "Failed to fetch projects.",
+          );
+        }
+
+        const data =
+          result?.data ?? result;
+
+        if (!Array.isArray(data)) {
+          throw new Error(
+            "Invalid projects response.",
+          );
+        }
+
+        setProjects(data);
+        setError(null);
+      } catch (error) {
+        console.error(
+          "Failed to fetch projects:",
+          error,
         );
+
+        setProjects([]);
+
+        setError(
+          error instanceof Error
+            ? error.message
+            : "Failed to fetch projects.",
+        );
+      } finally {
+        setLoading(false);
       }
-
-      setProjects(data);
-      setError(null);
-    } catch (error) {
-      console.error(
-        "Failed to fetch projects:",
-        error,
-      );
-
-      setProjects([]);
-
-      setError(
-        error instanceof Error
-          ? error.message
-          : "Failed to fetch projects.",
-      );
-    } finally {
-      setLoading(false);
-    }
-  }, [isAdmin]);
+    },
+    [isAdmin],
+  );
 
   useEffect(() => {
     const loadProjects = async () => {
@@ -95,7 +104,9 @@ export default function ProjectList({
             className="animate-spin"
           />
 
-          <span>Loading projects...</span>
+          <span>
+            Loading projects...
+          </span>
         </div>
       </div>
     );
@@ -159,15 +170,29 @@ export default function ProjectList({
   }
 
   return (
-    <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
-      {projects.map((project) => (
-        <ProjectCard
-          key={project.id}
-          project={project}
-          isAdmin={isAdmin}
-          onDeleted={fetchProjects}
-        />
-      ))}
+    <div className="grid grid-cols-1 gap-7 lg:grid-cols-2">
+      {projects.map((project, index) => {
+        const isLeftColumn =
+          index % 2 === 0;
+
+        return (
+          <Appear
+            key={project.id}
+            direction={
+              isLeftColumn
+                ? "left"
+                : "right"
+            }
+            delay={0}
+          >
+            <ProjectCard
+              project={project}
+              isAdmin={isAdmin}
+              onDeleted={fetchProjects}
+            />
+          </Appear>
+        );
+      })}
     </div>
   );
 }

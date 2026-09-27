@@ -53,3 +53,39 @@ body {
 #main-content {
   scroll-behavior: smooth;
 }
+
+
+/* Swiper */
+.mySwiper2 {
+  width: 100%;
+  height: 80%;
+}
+
+.mySwiper {
+  width: 100%;
+  height: 20%;
+  box-sizing: border-box;
+  padding: 10px 0;
+}
+
+.mySwiper .swiper-slide {
+  width: 25%;
+  height: 100%;
+  opacity: 0.4;
+  cursor: pointer;
+}
+
+.mySwiper .swiper-slide-thumb-active {
+  opacity: 1;
+}
+
+.mySwiper2 .swiper-slide {
+  background: transparent;
+}
+
+.mySwiper2 .swiper-slide,
+.mySwiper .swiper-slide {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}

@@ -53,11 +53,11 @@ const navItems = [
     href: "#stack",
     icon: Layers3,
   },
-  {
-    name: "Testimonials",
-    href: "#testimonials",
-    icon: MessageSquareQuote,
-  },
+  // {
+  //   name: "Testimonials",
+  //   href: "#testimonials",
+  //   icon: MessageSquareQuote,
+  // },
   {
     name: "Blog",
     href: "#blog",

@@ -7,7 +7,7 @@ import Process from "@/components/sections/Process";
 import Stack from "@/components/sections/Tools";
 import Blog from "@/components/sections/Blog";
 import Contact from "@/components/sections/Contact";
-import Testimonials from "@/components/sections/Testimonial";
+// import Testimonials from "@/components/sections/Testimonial";
 
 export default function HomePage() {
   return (
@@ -19,7 +19,7 @@ export default function HomePage() {
       <Experience />
       <Process />
       <Stack />
-      <Testimonials />
+      {/* <Testimonials /> */}
       <Blog />
       <Contact />
     </>

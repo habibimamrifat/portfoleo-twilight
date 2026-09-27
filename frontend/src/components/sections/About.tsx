@@ -7,6 +7,7 @@ import {
   Database,
   Layers3,
 } from "lucide-react";
+import Appear from "../common/animation/Appear";
 
 const strengths = [
   {
@@ -14,24 +15,32 @@ const strengths = [
     description:
       "Building responsive and interactive interfaces with React, Next.js and modern CSS.",
     icon: Code2,
+    direction: "left" as const,
+    delay: 0.3,
   },
   {
     title: "Backend",
     description:
       "Designing APIs and backend systems with Node.js, Express and NestJS.",
     icon: Server,
+    direction: "right" as const,
+    delay: 0.3,
   },
   {
     title: "Database",
     description:
       "Working with PostgreSQL, MongoDB, Prisma and structured data models.",
     icon: Database,
+    direction: "left" as const,
+    delay: 0.6,
   },
   {
     title: "Architecture",
     description:
       "Learning and applying scalable architecture, modular systems and clean backend design.",
     icon: Layers3,
+    direction: "right" as const,
+    delay: 0.9,
   },
 ];
 
@@ -42,53 +51,63 @@ export default function About() {
       className="px-6 py-20 lg:px-10"
     >
       <div className="space-y-6">
-        <div>
-          <p className="text-sm uppercase tracking-[0.25em] text-blue-400">
-            About Me
-          </p>
+        {/* Section Header */}
+        <Appear>
+          <div>
+            <p className="text-sm uppercase tracking-[0.25em] text-blue-400">
+              About Me
+            </p>
 
-          <h2 className="mt-2 text-3xl font-bold">
-            Building with purpose.
-          </h2>
-        </div>
+            <h2 className="mt-2 text-3xl font-bold">
+              Building with purpose.
+            </h2>
+          </div>
+        </Appear>
 
-        <Card className="p-8">
-          <p className="max-w-3xl text-base leading-8 text-white/60">
-            I am a full-stack developer with a strong interest in
-            backend engineering and system architecture. I enjoy
-            understanding how applications work beyond the UI and
-            designing systems that remain maintainable as they grow.
-          </p>
+        {/* About Description */}
+        <Appear delay={0.2}>
+          <Card className="p-8">
+            <p className="max-w-3xl text-base leading-8 text-white/60">
+              I am a full-stack developer with a strong interest in
+              backend engineering and system architecture. I enjoy
+              understanding how applications work beyond the UI and
+              designing systems that remain maintainable as they grow.
+            </p>
 
-          <p className="mt-5 max-w-3xl text-base leading-8 text-white/60">
-            My current focus is becoming stronger in backend
-            development, distributed systems, system design and
-            production-ready application architecture.
-          </p>
-        </Card>
+            <p className="mt-5 max-w-3xl text-base leading-8 text-white/60">
+              My current focus is becoming stronger in backend
+              development, distributed systems, system design and
+              production-ready application architecture.
+            </p>
+          </Card>
+        </Appear>
 
+        {/* Strengths */}
         <div className="grid gap-4 sm:grid-cols-2">
           {strengths.map((item) => {
             const Icon = item.icon;
 
             return (
-              <Card
+              <Appear
                 key={item.title}
-                className="p-6"
+                direction={item.direction}
+                delay={item.delay}
               >
-                <Icon
-                  size={24}
-                  className="text-blue-400"
-                />
+                <Card className="h-full p-6">
+                  <Icon
+                    size={24}
+                    className="text-blue-400"
+                  />
 
-                <h3 className="mt-4 font-semibold">
-                  {item.title}
-                </h3>
+                  <h3 className="mt-4 font-semibold">
+                    {item.title}
+                  </h3>
 
-                <p className="mt-2 text-sm leading-6 text-white/50">
-                  {item.description}
-                </p>
-              </Card>
+                  <p className="mt-2 text-sm leading-6 text-white/50">
+                    {item.description}
+                  </p>
+                </Card>
+              </Appear>
             );
           })}
         </div>

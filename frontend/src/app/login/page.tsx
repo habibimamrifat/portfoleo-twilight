@@ -43,7 +43,7 @@ export default function LoginPage() {
       setAuthToken(result.data.authToken);
       setRenewToken(result.data.renewToken);
 
-      router.push("/dashboard");
+      router.push("/dashboard/profile");
     } catch {
       setError("Something went wrong. Please try again.");
     } finally {

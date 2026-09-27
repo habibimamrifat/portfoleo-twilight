@@ -146,4 +146,30 @@ export class ProjectCommentService {
       message: 'Project comment deleted successfully',
     };
   }
+
+  async findOnePublic(id: string) {
+    const comment = await this.prisma.projectComment.findFirst({
+      where: {
+        id,
+        status: 'APPROVED',
+      },
+    });
+
+    if (!comment) {
+      throw new NotFoundException('Project comment not found');
+    }
+
+    return comment;
+  }
+
+  async findAllAdminByProject(projectId: string) {
+    return this.prisma.projectComment.findMany({
+      where: {
+        projectId,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+  }
 }

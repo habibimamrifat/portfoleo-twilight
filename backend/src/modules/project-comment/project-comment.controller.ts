@@ -43,8 +43,17 @@ export class ProjectCommentController {
   @Get('project/:projectId')
   @RouteFor(routeTypeObj.PUBLIC)
   async findApprovedByProject(@Param('projectId') projectId: string) {
+    console.log('here i am being called');
     return {
       data: await this.projectCommentService.findApprovedByProject(projectId),
+    };
+  }
+
+  @Get('comment/:id')
+  @RouteFor(routeTypeObj.PUBLIC)
+  async findOnePublic(@Param('id') id: string) {
+    return {
+      data: await this.projectCommentService.findOnePublic(id),
     };
   }
 
@@ -81,6 +90,14 @@ export class ProjectCommentController {
   async remove(@Param('id') id: string) {
     return {
       data: await this.projectCommentService.remove(id),
+    };
+  }
+
+  @Get('admin/project/:projectId')
+  @RouteFor(routeTypeObj.ADMIN)
+  async findAllAdminByProject(@Param('projectId') projectId: string) {
+    return {
+      data: await this.projectCommentService.findAllAdminByProject(projectId),
     };
   }
 }

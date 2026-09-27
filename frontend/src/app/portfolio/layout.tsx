@@ -5,7 +5,7 @@ import Identity from "@/components/Identity";
 import { AppProvider } from "@/components/context/AppContext";
 import TopNavigation from "@/components/layout/TopNavigation";
 import MobileSideNav from "@/components/layout/MobileSideNav";
-
+import Appear from "@/components/common/animation/Appear";
 
 export default function PortfolioLayout({
   children,
@@ -28,7 +28,14 @@ export default function PortfolioLayout({
             <aside className="relative col-span-3 hidden h-full xl:block">
               <div className="absolute left-0 top-1/2 h-3/4 w-full -translate-y-1/2">
                 <div className="mx-2 h-full rounded-4xl">
-                  <Identity />
+                  <Appear
+                    direction="left"
+                    delay={0}
+                    duration={0.4}
+                    immediate
+                  >
+                    <Identity />
+                  </Appear>
                 </div>
               </div>
             </aside>
@@ -50,8 +57,15 @@ export default function PortfolioLayout({
             {/* DESKTOP NAVIGATION */}
             <aside className="relative col-span-1 hidden h-full xl:block">
               <div className="absolute right-0 top-1/2 h-2/3 -translate-y-1/2">
-                <div className="-mx-2 h-full rounded-4xl">
-                  <Navbar />
+                <div className="-mx-4 h-full rounded-4xl">
+                  <Appear
+                    direction="right"
+                    delay={0}
+                    duration={0.4}
+                    immediate
+                  >
+                    <Navbar />
+                  </Appear>
                 </div>
               </div>
             </aside>

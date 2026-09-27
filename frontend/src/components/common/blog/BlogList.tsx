@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { ImagePlus, Loader2 } from "lucide-react";
 
 import { getApi } from "@/api/getapi";
+import Appear from "@/components/common/animation/Appear";
 
 import BlogCard, {
   type Blog,
@@ -220,21 +221,6 @@ export default function BlogList({
           setLoading(true);
         }
 
-        /*
-         * PUBLIC
-         * GET /blog-posts
-         *
-         * Returns only PUBLISHED blogs.
-         *
-         * ADMIN
-         * GET /blog-posts/admin/all
-         *
-         * Returns ALL blogs:
-         * DRAFT
-         * PUBLISHED
-         * ARCHIVED
-         */
-
         const endpoint = isAdmin
           ? "/blog-posts/admin/all"
           : "/blog-posts";
@@ -418,13 +404,18 @@ export default function BlogList({
 
   return (
     <div className="space-y-3">
-      {blogs.map((blog) => (
-        <BlogCard
+      {blogs.map((blog, index) => (
+        <Appear
           key={blog.id}
-          blog={blog}
-          isAdmin={isAdmin}
-          refreshBlogList={refreshBlogList}
-        />
+          direction="bottom"
+          delay={index * 0.25}
+        >
+          <BlogCard
+            blog={blog}
+            isAdmin={isAdmin}
+            refreshBlogList={refreshBlogList}
+          />
+        </Appear>
       ))}
     </div>
   );

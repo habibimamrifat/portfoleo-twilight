@@ -5,6 +5,7 @@ import { Mail, Send, X, Loader2 } from "lucide-react";
 
 import Card from "../common/util/Card";
 import { callApi } from "@/api/callApi";
+import Appear from "@/components/common/animation/Appear";
 
 type ContactForm = {
   name: string;
@@ -168,50 +169,55 @@ export default function Contact() {
         id="contact"
         className="px-6 py-20 lg:px-10"
       >
-        <div className="space-y-6">
-          {/* HEADER */}
+        <Appear
+          direction="bottom"
+          delay={0}
+        >
+          <div className="space-y-6">
+            {/* HEADER */}
 
-          <div>
-            <p className="text-sm uppercase tracking-[0.25em] text-blue-400">
-              Contact
-            </p>
-
-            <h2 className="mt-2 text-3xl font-bold">
-              Lets build something.
-            </h2>
-          </div>
-
-          {/* CONTACT CARD */}
-
-          <Card className="p-8 lg:p-10">
-            <div className="max-w-2xl">
-              <h3 className="text-2xl font-semibold">
-                Have a project in mind?
-              </h3>
-
-              <p className="mt-4 text-sm leading-7 text-white/50">
-                Tell me what you are building, what
-                problem you are trying to solve, and
-                where you need help. I will get back to
-                you with the next steps.
+            <div>
+              <p className="text-sm uppercase tracking-[0.25em] text-blue-400">
+                Contact
               </p>
 
-              <div className="mt-8 flex flex-wrap gap-3">
-                {/* EMAIL BUTTON */}
-
-                <button
-                  type="button"
-                  onClick={openContact}
-                  className="flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-5 py-3 text-sm backdrop-blur-md transition hover:bg-white/20"
-                >
-                  <Mail size={16} />
-
-                  Email Me
-                </button>
-              </div>
+              <h2 className="mt-2 text-3xl font-bold">
+                Lets build something.
+              </h2>
             </div>
-          </Card>
-        </div>
+
+            {/* CONTACT CARD */}
+
+            <Card className="p-8 lg:p-10">
+              <div className="max-w-2xl">
+                <h3 className="text-2xl font-semibold">
+                  Have a project in mind?
+                </h3>
+
+                <p className="mt-4 text-sm leading-7 text-white/50">
+                  Tell me what you are building, what
+                  problem you are trying to solve, and
+                  where you need help. I will get back to
+                  you with the next steps.
+                </p>
+
+                <div className="mt-8 flex flex-wrap gap-3">
+                  {/* EMAIL BUTTON */}
+
+                  <button
+                    type="button"
+                    onClick={openContact}
+                    className="flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-5 py-3 text-sm backdrop-blur-md transition hover:bg-white/20"
+                  >
+                    <Mail size={16} />
+
+                    Email Me
+                  </button>
+                </div>
+              </div>
+            </Card>
+          </div>
+        </Appear>
       </section>
 
       {/* =====================================================

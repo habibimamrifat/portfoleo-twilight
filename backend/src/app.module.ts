@@ -22,6 +22,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { RouteGuard } from './guard/route.guard';
 import { AuthGuard } from './guard/auth.guard';
 import { ContactModule } from './modules/contact/contact.module';
+import { ProjectCommentModule } from './modules/project-comment/project-comment.module';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { ContactModule } from './modules/contact/contact.module';
     BlogModule,
     BlogCommentsModule,
     CloudinaryModule,
+    ProjectCommentModule,
   ],
   controllers: [AppController],
   providers: [

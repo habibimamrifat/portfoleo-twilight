@@ -1,42 +1,74 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
-import Image from "next/image";
 import {
-  ArrowLeft,
+  CalendarDays,
   ExternalLink,
+  FileText,
   Loader2,
 } from "lucide-react";
 import { FaGithub } from "react-icons/fa";
 
 import Card from "@/components/common/util/Card";
 import { getApi } from "@/api/getapi";
+import ProjectCommentList from "./comments/ProjectCommentList";
+import ImageSwiper from "../slider/ThumbsGalary";
+import Appear from "@/components/common/animation/Appear";
 
-import WriteProjectComment from "@/components/common/projects/WriteProjectComment";
-import ProjectCommentList from "@/components/common/projects/ProjectComment";
+type ProjectStatus =
+  | "IN_PROGRESS"
+  | "DEVELOPED"
+  | "DISCONTINUED";
 
-type Project = {
+interface Project {
   id: string;
   name: string;
   description: string;
   images: string[];
   liveLink?: string | null;
   githubLink?: string | null;
-  status: string;
+  status: ProjectStatus;
   platform: string;
   approachTaken?: string | null;
   featured: boolean;
   sortOrder: number;
-  isActive: boolean;
+  isActive?: boolean;
   createdAt: string;
   updatedAt: string;
-};
+}
 
 interface ViewProjectProps {
   projectId: string;
   isAdmin?: boolean;
 }
+
+const getImageUrl = (
+  image?: string | null,
+): string | null => {
+  if (!image) {
+    return null;
+  }
+
+  const trimmed = image.trim();
+
+  if (!trimmed) {
+    return null;
+  }
+
+  if (
+    trimmed.startsWith("http://") ||
+    trimmed.startsWith("https://") ||
+    trimmed.startsWith("blob:")
+  ) {
+    return trimmed;
+  }
+
+  if (trimmed.startsWith("/")) {
+    return trimmed;
+  }
+
+  return `/${trimmed}`;
+};
 
 export default function ViewProject({
   projectId,
@@ -46,12 +78,24 @@ export default function ViewProject({
     useState<Project | null>(null);
 
   const [loading, setLoading] =
-    useState(true);
+    useState(Boolean(projectId));
 
   const [error, setError] =
-    useState<string | null>(null);
+    useState<string | null>(
+      projectId
+        ? null
+        : "Project could not be identified.",
+    );
+
+  /* =========================================================
+     FETCH PROJECT
+     ========================================================= */
 
   useEffect(() => {
+    if (!projectId) {
+      return;
+    }
+
     let cancelled = false;
 
     const fetchProject = async () => {
@@ -64,39 +108,51 @@ export default function ViewProject({
           isAdmin,
         );
 
-        const result = await response.json();
+        const result =
+          await response.json();
 
         if (!response.ok) {
           throw new Error(
             result?.message ||
-              "Failed to load project.",
+              "Failed to fetch project.",
           );
         }
 
-        const projectData =
-          result?.data ?? result;
+        const rawProject =
+          result?.data?.data ??
+          result?.data ??
+          result;
+
+        if (
+          !rawProject ||
+          typeof rawProject !== "object"
+        ) {
+          throw new Error(
+            "Invalid project response.",
+          );
+        }
 
         if (cancelled) {
           return;
         }
 
-        setProject(projectData);
+        setProject(rawProject as Project);
       } catch (error) {
+        if (cancelled) {
+          return;
+        }
+
         console.error(
           "Failed to fetch project:",
           error,
         );
-
-        if (cancelled) {
-          return;
-        }
 
         setProject(null);
 
         setError(
           error instanceof Error
             ? error.message
-            : "Failed to load project.",
+            : "Failed to fetch project.",
         );
       } finally {
         if (!cancelled) {
@@ -105,216 +161,260 @@ export default function ViewProject({
       }
     };
 
-    void fetchProject();
+    fetchProject();
 
     return () => {
       cancelled = true;
     };
   }, [projectId, isAdmin]);
 
+  /* =========================================================
+     INVALID PROJECT ID
+     ========================================================= */
+
+  if (!projectId) {
+    return (
+      <Appear
+        direction="none"
+        delay={0}
+        duration={0.5}
+      >
+        <Card className="flex flex-col items-center justify-center p-10 text-center">
+          <FileText
+            size={32}
+            strokeWidth={1.5}
+            className="mb-3 text-white/20"
+          />
+
+          <p className="text-sm text-white/50">
+            Project could not be identified.
+          </p>
+        </Card>
+      </Appear>
+    );
+  }
+
+  /* =========================================================
+     LOADING
+     ========================================================= */
+
   if (loading) {
     return (
-      <main className="flex min-h-screen items-center justify-center px-6">
-        <div className="flex items-center gap-3 text-sm text-white/50">
+      <div className="flex items-center justify-center py-20">
+        <div className="flex items-center gap-2 text-sm text-white/40">
           <Loader2
-            size={18}
+            size={17}
             className="animate-spin"
           />
 
-          <span>
-            Loading project...
-          </span>
+          Loading project...
         </div>
-      </main>
+      </div>
     );
   }
+
+  /* =========================================================
+     ERROR
+     ========================================================= */
 
   if (error || !project) {
     return (
-      <main className="flex min-h-screen items-center justify-center px-6">
-        <Card className="w-full max-w-lg p-8 text-center">
-          <h1 className="text-xl font-semibold text-white">
-            Project not found
-          </h1>
+      <Appear
+        direction="none"
+        delay={0}
+        duration={0.5}
+      >
+        <Card className="flex flex-col items-center justify-center p-10 text-center">
+          <FileText
+            size={32}
+            strokeWidth={1.5}
+            className="mb-3 text-white/20"
+          />
 
-          <p className="mt-3 text-sm text-white/40">
-            {error ||
-              "The project you're looking for doesn't exist."}
+          <p className="text-sm text-white/50">
+            {error || "Project not found."}
           </p>
-
-          <Link
-            href={
-              isAdmin
-                ? "/dashboard/projects"
-                : "/portfolio/projects"
-            }
-            className="mt-6 inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-5 py-3 text-sm text-white/70 transition hover:bg-white/10 hover:text-white"
-          >
-            <ArrowLeft size={16} />
-
-            Back to Projects
-          </Link>
         </Card>
-      </main>
+      </Appear>
     );
   }
 
+  /* =========================================================
+     PROJECT DATA
+     ========================================================= */
+
+  const formattedDate = new Date(
+    project.createdAt,
+  ).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+
+  const images = Array.isArray(project.images)
+    ? project.images
+        .map((image) => getImageUrl(image))
+        .filter(
+          (image): image is string =>
+            Boolean(image),
+        )
+    : [];
+
+  /* =========================================================
+     RENDER PROJECT
+     ========================================================= */
+
   return (
-    <main className="px-6 py-20 lg:px-10">
-      <div className="mx-auto max-w-6xl">
+    <article className="space-y-6">
+      {/* =====================================================
+          HEADER
+          ===================================================== */}
 
-        {/* Back to Projects */}
-        <Link
-          href={
-            isAdmin
-              ? "/dashboard/projects"
-              : "/portfolio/projects"
-          }
-          className="mb-8 inline-flex items-center gap-2 text-sm text-white/40 transition hover:text-white"
-        >
-          <ArrowLeft size={16} />
+      <Appear
+        direction="bottom"
+        delay={0}
+        duration={0.6}
+      >
+        <Card className="overflow-hidden">
+          {/* PROJECT IMAGES */}
 
-          Back to Projects
-        </Link>
+          {images.length > 0 && (
+            <ImageSwiper
+              images={images}
+              alt={project.name}
+            />
+          )}
 
-        {/* Project Header */}
-        <div>
-          <p className="text-sm uppercase tracking-[0.25em] text-blue-400">
-            {project.platform}
-          </p>
+          {/* PROJECT HEADER */}
 
-          <h1 className="mt-3 text-4xl font-bold text-white lg:text-5xl">
-            {project.name}
-          </h1>
+          <div className="p-6 md:p-8">
+            <div className="mb-5 flex flex-wrap items-center gap-2">
+              <span className="rounded-lg border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-white/60">
+                {project.platform}
+              </span>
 
-          <p className="mt-5 max-w-3xl text-base leading-8 text-white/50">
-            {project.description}
-          </p>
-        </div>
+              <span
+                className={`rounded-lg border px-3 py-1 text-xs font-medium ${
+                  project.status === "DEVELOPED"
+                    ? "border-green-400/20 bg-green-500/10 text-green-300"
+                    : project.status ===
+                        "DISCONTINUED"
+                      ? "border-red-400/20 bg-red-500/10 text-red-300"
+                      : "border-yellow-400/20 bg-yellow-500/10 text-yellow-300"
+                }`}
+              >
+                {project.status}
+              </span>
 
-        {/* Project Images */}
-        {project.images?.length > 0 && (
-          <div className="mt-10 grid gap-5 md:grid-cols-2">
-            {project.images.map(
-              (image, index) => (
-                <Card
-                  key={`${image}-${index}`}
-                  className="overflow-hidden p-0"
-                >
-                  <div className="relative aspect-video w-full">
-                    <Image
-                      src={image}
-                      alt={`${project.name} image ${
-                        index + 1
-                      }`}
-                      fill
-                      sizes="(max-width: 768px) 100vw, 50vw"
-                      className="object-cover"
-                    />
-                  </div>
-                </Card>
-              ),
+              {project.featured && (
+                <span className="rounded-lg border border-white/10 bg-white/10 px-3 py-1 text-xs font-medium text-white/70">
+                  Featured
+                </span>
+              )}
+            </div>
+
+            <h1 className="max-w-4xl text-3xl font-semibold leading-tight text-white md:text-4xl">
+              {project.name}
+            </h1>
+
+            <p className="mt-4 max-w-4xl text-base leading-7 text-white/50 md:text-lg">
+              {project.description}
+            </p>
+
+            {/* LINKS */}
+
+            {(project.liveLink ||
+              project.githubLink) && (
+              <div className="mt-6 flex flex-wrap items-center gap-3">
+                {project.liveLink && (
+                  <a
+                    href={project.liveLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white/70 transition hover:bg-white/10 hover:text-white"
+                  >
+                    <ExternalLink size={16} />
+
+                    Live Project
+                  </a>
+                )}
+
+                {project.githubLink && (
+                  <a
+                    href={project.githubLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white/70 transition hover:bg-white/10 hover:text-white"
+                  >
+                    <FaGithub size={16} />
+
+                    GitHub
+                  </a>
+                )}
+              </div>
             )}
+
+            {/* META */}
+
+            <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-3 border-t border-white/10 pt-5 text-sm text-white/35">
+              <div className="flex items-center gap-2">
+                <CalendarDays
+                  size={16}
+                  strokeWidth={1.6}
+                />
+
+                <span>{formattedDate}</span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <FileText
+                  size={16}
+                  strokeWidth={1.6}
+                />
+
+                <span>{project.platform}</span>
+              </div>
+            </div>
           </div>
-        )}
+        </Card>
+      </Appear>
 
-        {/* Project Information */}
-        <div className="mt-10 grid gap-6 lg:grid-cols-3">
-          <Card className="p-6">
-            <p className="text-xs uppercase tracking-wider text-white/30">
-              Platform
-            </p>
+      {/* =====================================================
+          APPROACH
+          ===================================================== */}
 
-            <p className="mt-2 text-sm text-white/70">
-              {project.platform}
-            </p>
-          </Card>
-
-          <Card className="p-6">
-            <p className="text-xs uppercase tracking-wider text-white/30">
-              Status
-            </p>
-
-            <p className="mt-2 text-sm text-white/70">
-              {project.status}
-            </p>
-          </Card>
-
-          <Card className="p-6">
-            <p className="text-xs uppercase tracking-wider text-white/30">
-              Project
-            </p>
-
-            <p className="mt-2 text-sm text-white/70">
-              {project.featured
-                ? "Featured"
-                : "Project"}
-            </p>
-          </Card>
-        </div>
-
-        {/* Approach */}
-        {project.approachTaken && (
-          <Card className="mt-8 p-8">
-            <p className="text-sm uppercase tracking-[0.2em] text-blue-400">
-              Approach
-            </p>
-
-            <h2 className="mt-2 text-2xl font-semibold text-white">
-              How I approached the project
+      {project.approachTaken && (
+        <Appear
+          direction="bottom"
+          delay={0.15}
+          duration={0.6}
+        >
+          <Card className="p-6 md:p-8">
+            <h2 className="text-xl font-semibold text-white">
+              Approach Taken
             </h2>
 
-            <p className="mt-5 max-w-4xl whitespace-pre-wrap text-sm leading-7 text-white/50">
+            <p className="mt-4 whitespace-pre-wrap break-words text-[15px] leading-8 text-white/70 md:text-base">
               {project.approachTaken}
             </p>
           </Card>
-        )}
+        </Appear>
+      )}
 
-        {/* Links */}
-        {(project.liveLink ||
-          project.githubLink) && (
-          <div className="mt-8 flex flex-wrap gap-3">
-            {project.liveLink && (
-              <a
-                href={project.liveLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-5 py-3 text-sm text-white transition hover:bg-white/20"
-              >
-                <ExternalLink size={16} />
+      {/* =====================================================
+          COMMENTS
+          ===================================================== */}
 
-                Live Project
-              </a>
-            )}
-
-            {project.githubLink && (
-              <a
-                href={project.githubLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-5 py-3 text-sm text-white/70 transition hover:bg-white/10 hover:text-white"
-              >
-                <FaGithub size={16} />
-
-                GitHub
-              </a>
-            )}
-          </div>
-        )}
-
-        {/* Project Comments */}
+      <Appear
+        direction="bottom"
+        delay={0.3}
+        duration={0.6}
+      >
         <ProjectCommentList
           projectId={project.id}
           isAdmin={isAdmin}
         />
-
-        {/* Write Project Comment */}
-        {!isAdmin && (
-          <WriteProjectComment
-            projectId={project.id}
-          />
-        )}
-      </div>
-    </main>
+      </Appear>
+    </article>
   );
 }

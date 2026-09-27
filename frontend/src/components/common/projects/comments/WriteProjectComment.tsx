@@ -11,16 +11,15 @@ import {
 import Card from "@/components/common/util/Card";
 import { callApi } from "@/api/callApi";
 
-type WriteProjectCommentProps = {
+interface WriteProjectCommentProps {
   projectId: string;
-  onCommentSubmitted?: () => void;
-};
+}
 
-type CommentForm = {
+interface CommentForm {
   name: string;
   email: string;
   comment: string;
-};
+}
 
 const initialForm: CommentForm = {
   name: "",
@@ -30,7 +29,6 @@ const initialForm: CommentForm = {
 
 export default function WriteProjectComment({
   projectId,
-  onCommentSubmitted,
 }: WriteProjectCommentProps) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -59,6 +57,7 @@ export default function WriteProjectComment({
     setIsOpen(false);
     setError(null);
     setSuccess(null);
+    setForm(initialForm);
   };
 
   const handleChange = (
@@ -83,7 +82,7 @@ export default function WriteProjectComment({
   };
 
   const handleSubmit = async (
-    event: React.FormEvent<HTMLFormElement>,
+    event: React.SubmitEvent<HTMLFormElement>,
   ) => {
     event.preventDefault();
 
@@ -94,12 +93,16 @@ export default function WriteProjectComment({
       return;
     }
 
-    if (!form.name.trim()) {
+    const name = form.name.trim();
+    const email = form.email.trim();
+    const comment = form.comment.trim();
+
+    if (!name) {
       setError("Please enter your name.");
       return;
     }
 
-    if (!form.comment.trim()) {
+    if (!comment) {
       setError("Please write a comment.");
       return;
     }
@@ -114,13 +117,14 @@ export default function WriteProjectComment({
         "POST",
         {
           projectId,
-          name: form.name.trim(),
-          email: form.email.trim() || undefined,
-          comment: form.comment.trim(),
+          name,
+          email: email || undefined,
+          comment,
         },
       );
 
-      const result = await response.json();
+      const result =
+        await response.json();
 
       if (!response.ok) {
         throw new Error(
@@ -130,13 +134,10 @@ export default function WriteProjectComment({
       }
 
       setSuccess(
-        result?.message ||
           "Your comment has been submitted and is awaiting approval.",
       );
 
       setForm(initialForm);
-
-      onCommentSubmitted?.();
     } catch (error) {
       console.error(
         "Failed to submit project comment:",
@@ -160,17 +161,18 @@ export default function WriteProjectComment({
         <button
           type="button"
           onClick={openModal}
-          className="flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-5 py-3 text-sm font-medium text-white backdrop-blur-md transition hover:bg-white/20"
+          className="w-full flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-5 py-3 text-sm font-medium text-white backdrop-blur-md transition hover:bg-white/20"
         >
           <MessageCircle size={17} />
+
           Write a Comment
         </button>
       </div>
 
-      {/* Popup */}
+      {/* Comment Modal */}
       {isOpen && (
         <div className="fixed inset-0 z-[9999] flex min-h-screen items-center justify-center overflow-y-auto bg-black/60 px-4 py-8 backdrop-blur-xl sm:px-6">
-          {/* Close Button */}
+          {/* Close */}
           <button
             type="button"
             onClick={closeModal}
@@ -181,8 +183,8 @@ export default function WriteProjectComment({
             <X size={20} />
           </button>
 
-          <div className="w-full max-w-xl">
-            <Card className="relative p-6 sm:p-8">
+          <div className="w-full max-w-3xl">
+            <Card className="relative p-6 sm:p-8 lg:p-10">
               {/* Header */}
               <div className="mb-7">
                 <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/5">
@@ -197,7 +199,8 @@ export default function WriteProjectComment({
                 </h2>
 
                 <p className="mt-2 text-sm leading-6 text-white/40">
-                  Share your thoughts about this project.
+                  Share your thoughts about
+                  this project.
                 </p>
               </div>
 
@@ -240,6 +243,7 @@ export default function WriteProjectComment({
                       placeholder="Your name"
                       maxLength={100}
                       disabled={sending}
+                      required
                       className="h-11 w-full rounded-xl border border-white/10 bg-white/5 px-4 text-sm text-white outline-none placeholder:text-white/25 transition focus:border-white/25 focus:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
                     />
                   </div>
@@ -288,6 +292,7 @@ export default function WriteProjectComment({
                     rows={6}
                     maxLength={2000}
                     disabled={sending}
+                    required
                     className="w-full resize-none rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm leading-6 text-white outline-none placeholder:text-white/25 transition focus:border-white/25 focus:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
                   />
                 </div>
@@ -314,11 +319,13 @@ export default function WriteProjectComment({
                           size={16}
                           className="animate-spin"
                         />
+
                         Submitting...
                       </>
                     ) : (
                       <>
                         <Send size={16} />
+
                         Submit Comment
                       </>
                     )}

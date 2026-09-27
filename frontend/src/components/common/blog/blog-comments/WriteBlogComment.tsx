@@ -160,11 +160,11 @@ export default function WriteBlogComment({
     <>
       {/* Fixed Write Comment Button */}
       {!isOpen && (
-        <div className="pointer-events-none fixed bottom-6 left-0 right-0 z-50 flex justify-center px-4">
+        <div className="mt-8 flex justify-center">
           <button
             type="button"
             onClick={openModal}
-            className="pointer-events-auto flex items-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-6 py-3 text-sm font-medium text-white shadow-2xl backdrop-blur-xl transition-all duration-300 hover:border-white/30 hover:bg-white/20 active:scale-95"
+            className="w-full flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-5 py-3 text-sm font-medium text-white backdrop-blur-md transition hover:bg-white/20"
           >
             <MessageCircle size={17} />
             Write a Comment
