@@ -13,7 +13,7 @@ export default async function BlogPostPage({
   const { blogId } = await params;
 
   return (
-    <div className="pb-52">
+    <div className="mt-5">
       <ViewBlog
         blogId={blogId}
         isAdmin={false}

@@ -13,7 +13,7 @@ export default async function ProjectDetailsPage({
   const { projectId } = await params;
 
   return (
-    <div className="pb-52">
+    <div className="mt-5">
       <ViewProject
         projectId={projectId}
         isAdmin={false}
