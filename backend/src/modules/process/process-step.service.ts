@@ -2,6 +2,8 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 
 import { PrismaService } from '../../prisma/prisma.service';
 
+import { CloudinaryService } from '../../helpers/cloudinary/cloudanry.service';
+
 import {
   CreateProcessStepDto,
   UpdateProcessStepDto,
@@ -9,7 +11,10 @@ import {
 
 @Injectable()
 export class ProcessStepsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly cloudinaryService: CloudinaryService,
+  ) {}
 
   async findAll() {
     return this.prisma.processStep.findMany({
@@ -20,6 +25,7 @@ export class ProcessStepsService {
         id: true,
         name: true,
         detail: true,
+        img: true,
         sortOrder: true,
       },
       orderBy: {
@@ -28,10 +34,28 @@ export class ProcessStepsService {
     });
   }
 
-  async create(userId: string, createProcessStepDto: CreateProcessStepDto) {
+  async create(
+    userId: string,
+    createProcessStepDto: CreateProcessStepDto,
+    img?: Express.Multer.File,
+  ) {
+    let imageUrl: string | null = null;
+
+    if (img) {
+      const uploadedImage = await this.cloudinaryService.uploadImage(
+        img,
+        'process-steps',
+      );
+
+      imageUrl = uploadedImage.url;
+    }
+
     return this.prisma.processStep.create({
       data: {
         ...createProcessStepDto,
+
+        img: imageUrl,
+
         user: {
           connect: {
             id: userId,
@@ -55,8 +79,23 @@ export class ProcessStepsService {
     return processStep;
   }
 
-  async update(id: string, updateProcessStepDto: UpdateProcessStepDto) {
-    await this.findOne(id);
+  async update(
+    id: string,
+    updateProcessStepDto: UpdateProcessStepDto,
+    img?: Express.Multer.File,
+  ) {
+    const existingProcessStep = await this.findOne(id);
+
+    let imageUrl = existingProcessStep.img;
+
+    if (img) {
+      const uploadedImage = await this.cloudinaryService.uploadImage(
+        img,
+        'process-steps',
+      );
+
+      imageUrl = uploadedImage.url;
+    }
 
     return this.prisma.processStep.update({
       where: {
@@ -64,6 +103,8 @@ export class ProcessStepsService {
       },
       data: {
         ...updateProcessStepDto,
+
+        img: imageUrl,
       },
     });
   }

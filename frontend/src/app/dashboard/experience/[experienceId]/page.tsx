@@ -2,16 +2,19 @@ import ViewExperience from "@/components/common/experience/ViewExperience";
 
 type ExperiencePageProps = {
   params: Promise<{
-    expId: string;
+    experienceId: string;
   }>;
 };
 
 export default async function ExperiencePage({
   params,
 }: ExperiencePageProps) {
-  const { expId } = await params;
+  const { experienceId } = await params;
 
   return (
-    <ViewExperience experienceId={expId} />
+    <ViewExperience
+      experienceId={experienceId}
+      isAdmin
+    />
   );
 }

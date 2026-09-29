@@ -135,6 +135,20 @@ export class UserService {
 
         systemSettings: true,
 
+        aboutMe: {
+          include: {
+            workSectors: {
+              where: {
+                isActive: true,
+              },
+
+              orderBy: {
+                sortOrder: 'asc',
+              },
+            },
+          },
+        },
+
         services: {
           where: {
             isActive: true,
@@ -161,7 +175,11 @@ export class UserService {
               },
             },
 
-            approachSteps: {
+            approaches: {
+              where: {
+                isActive: true,
+              },
+
               orderBy: {
                 sortOrder: 'asc',
               },

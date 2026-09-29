@@ -6,7 +6,12 @@ import {
   Param,
   Patch,
   Post,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
+
+import { FileInterceptor } from '@nestjs/platform-express';
+import { memoryStorage } from 'multer';
 
 import {
   CreateProcessStepDto,
@@ -35,11 +40,17 @@ export class ProcessStepsController {
   @Post()
   @RouteFor(routeTypeObj.ADMIN)
   @ResponseMessage('Process step created successfully')
+  @UseInterceptors(
+    FileInterceptor('img', {
+      storage: memoryStorage(),
+    }),
+  )
   create(
     @CurrentUser() user: CurrentUserType,
     @Body() createProcessStepDto: CreateProcessStepDto,
+    @UploadedFile() img?: Express.Multer.File,
   ) {
-    return this.processStepsService.create(user.sub, createProcessStepDto);
+    return this.processStepsService.create(user.sub, createProcessStepDto, img);
   }
 
   @Get(':id')
@@ -52,11 +63,17 @@ export class ProcessStepsController {
   @Patch(':id')
   @RouteFor(routeTypeObj.ADMIN)
   @ResponseMessage('Process step updated successfully')
+  @UseInterceptors(
+    FileInterceptor('img', {
+      storage: memoryStorage(),
+    }),
+  )
   update(
     @Param('id') id: string,
     @Body() updateProcessStepDto: UpdateProcessStepDto,
+    @UploadedFile() img?: Express.Multer.File,
   ) {
-    return this.processStepsService.update(id, updateProcessStepDto);
+    return this.processStepsService.update(id, updateProcessStepDto, img);
   }
 
   @Delete(':id')

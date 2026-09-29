@@ -4,7 +4,10 @@ import { PrismaService } from '../../prisma/prisma.service';
 
 import { CloudinaryService } from '../../helpers/cloudinary/cloudanry.service';
 
-import { CreateExperienceDto, UpdateExperienceDto } from './dto/expreance.dto';
+import {
+  CreateExperienceDto,
+  UpdateExperienceDto,
+} from './dto/expreance.dto';
 
 @Injectable()
 export class ExperiencesService {
@@ -55,18 +58,26 @@ export class ExperiencesService {
     createExperienceDto: CreateExperienceDto,
     images: Express.Multer.File[],
   ) {
-    const { startDate, endDate, ...data } = createExperienceDto;
+    const {
+      startDate,
+      endDate,
+      ...data
+    } = createExperienceDto;
 
-    /*
-     * Upload all selected images to Cloudinary.
-     */
-    const uploadedImages = await Promise.all(
-      images.map((image) =>
-        this.cloudinaryService.uploadImage(image, 'experiences'),
-      ),
-    );
+    const uploadedImages =
+      await Promise.all(
+        images.map((image) =>
+          this.cloudinaryService.uploadImage(
+            image,
+            'experiences',
+          ),
+        ),
+      );
 
-    const imageUrls = uploadedImages.map((image) => image.url);
+    const imageUrls =
+      uploadedImages.map(
+        (image) => image.url,
+      );
 
     return this.prisma.experience.create({
       data: {
@@ -76,7 +87,9 @@ export class ExperiencesService {
 
         startDate: new Date(startDate),
 
-        endDate: endDate ? new Date(endDate) : null,
+        endDate: endDate
+          ? new Date(endDate)
+          : null,
 
         user: {
           connect: {
@@ -88,14 +101,17 @@ export class ExperiencesService {
   }
 
   async findOne(id: string) {
-    const experience = await this.prisma.experience.findUnique({
-      where: {
-        id,
-      },
-    });
+    const experience =
+      await this.prisma.experience.findUnique({
+        where: {
+          id,
+        },
+      });
 
     if (!experience) {
-      throw new NotFoundException('Experience not found');
+      throw new NotFoundException(
+        'Experience not found',
+      );
     }
 
     return experience;
@@ -106,32 +122,40 @@ export class ExperiencesService {
     updateExperienceDto: UpdateExperienceDto,
     images: Express.Multer.File[],
   ) {
-    /*
-     * Get existing experience first.
-     */
-    const existingExperience = await this.findOne(id);
+    const existingExperience =
+      await this.findOne(id);
 
-    const { startDate, endDate, ...data } = updateExperienceDto;
+    const {
+      startDate,
+      endDate,
+      responsibilities,
+      learned,
+      ...data
+    } = updateExperienceDto;
 
-    /*
-     * Existing images remain untouched.
-     */
-    let imageUrls = existingExperience.images;
+    let imageUrls =
+      existingExperience.images;
 
-    /*
-     * If new images were selected,
-     * upload them and append them.
-     */
     if (images.length > 0) {
-      const uploadedImages = await Promise.all(
-        images.map((image) =>
-          this.cloudinaryService.uploadImage(image, 'experiences'),
-        ),
-      );
+      const uploadedImages =
+        await Promise.all(
+          images.map((image) =>
+            this.cloudinaryService.uploadImage(
+              image,
+              'experiences',
+            ),
+          ),
+        );
 
-      const newImageUrls = uploadedImages.map((image) => image.url);
+      const newImageUrls =
+        uploadedImages.map(
+          (image) => image.url,
+        );
 
-      imageUrls = [...existingExperience.images, ...newImageUrls];
+      imageUrls = [
+        ...existingExperience.images,
+        ...newImageUrls,
+      ];
     }
 
     return this.prisma.experience.update({
@@ -142,20 +166,30 @@ export class ExperiencesService {
       data: {
         ...data,
 
+        ...(responsibilities !==
+          undefined && {
+          responsibilities,
+        }),
+
+        ...(learned !== undefined && {
+          learned,
+        }),
+
         images: imageUrls,
 
-        ...(startDate !== undefined && {
-          startDate: new Date(startDate),
+        ...(startDate !==
+          undefined && {
+          startDate: new Date(
+            startDate,
+          ),
         }),
 
         ...(endDate !== undefined && {
-          endDate: endDate ? new Date(endDate) : null,
+          endDate: endDate
+            ? new Date(endDate)
+            : null,
         }),
 
-        /*
-         * If the experience is marked current,
-         * there should be no end date.
-         */
         ...(data.isCurrent === true && {
           endDate: null,
         }),
@@ -173,7 +207,8 @@ export class ExperiencesService {
     });
 
     return {
-      message: 'Experience deleted successfully',
+      message:
+        'Experience deleted successfully',
     };
   }
 }

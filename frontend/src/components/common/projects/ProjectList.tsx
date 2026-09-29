@@ -24,10 +24,12 @@ export interface Project {
 
 interface ProjectListProps {
   isAdmin?: boolean;
+  isPortfolio?: boolean;
 }
 
 export default function ProjectList({
   isAdmin = false,
+  isPortfolio = false,
 }: ProjectListProps) {
   const [projects, setProjects] =
     useState<Project[]>([]);
@@ -169,30 +171,36 @@ export default function ProjectList({
     );
   }
 
+  const displayedProjects = isPortfolio
+    ? projects.slice(0, 4)
+    : projects;
+
   return (
     <div className="grid grid-cols-1 gap-7 lg:grid-cols-2">
-      {projects.map((project, index) => {
-        const isLeftColumn =
-          index % 2 === 0;
+      {displayedProjects.map(
+        (project, index) => {
+          const isLeftColumn =
+            index % 2 === 0;
 
-        return (
-          <Appear
-            key={project.id}
-            direction={
-              isLeftColumn
-                ? "left"
-                : "right"
-            }
-            delay={0}
-          >
-            <ProjectCard
-              project={project}
-              isAdmin={isAdmin}
-              onDeleted={fetchProjects}
-            />
-          </Appear>
-        );
-      })}
+          return (
+            <Appear
+              key={project.id}
+              direction={
+                isLeftColumn
+                  ? "left"
+                  : "right"
+              }
+              delay={0}
+            >
+              <ProjectCard
+                project={project}
+                isAdmin={isAdmin}
+                onDeleted={fetchProjects}
+              />
+            </Appear>
+          );
+        },
+      )}
     </div>
   );
 }

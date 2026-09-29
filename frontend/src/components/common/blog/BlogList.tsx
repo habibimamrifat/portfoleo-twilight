@@ -12,10 +12,12 @@ import BlogCard, {
 
 interface BlogListProps {
   isAdmin?: boolean;
+  isPortfolio?: boolean;
 }
 
 export default function BlogList({
   isAdmin = false,
+  isPortfolio = false,
 }: BlogListProps) {
   const [blogs, setBlogs] = useState<Blog[]>([]);
   const [loading, setLoading] = useState(true);
@@ -402,9 +404,18 @@ export default function BlogList({
     );
   }
 
+  /*
+   * Portfolio page shows only 4 posts.
+   * Other pages show all posts.
+   */
+
+  const displayedBlogs = isPortfolio
+    ? blogs.slice(0, 4)
+    : blogs;
+
   return (
     <div className="space-y-3">
-      {blogs.map((blog, index) => (
+      {displayedBlogs.map((blog, index) => (
         <Appear
           key={blog.id}
           direction="bottom"

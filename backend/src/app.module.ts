@@ -23,6 +23,9 @@ import { RouteGuard } from './guard/route.guard';
 import { AuthGuard } from './guard/auth.guard';
 import { ContactModule } from './modules/contact/contact.module';
 import { ProjectCommentModule } from './modules/project-comment/project-comment.module';
+import { BannerQuoteModule } from './modules/banner/banner.module';
+import { ProjectApproachModule } from './modules/projectApproach/project-approach.module';
+import { AboutMeModule } from './modules/aboutMe/about-me.module';
 
 @Module({
   imports: [
@@ -35,6 +38,8 @@ import { ProjectCommentModule } from './modules/project-comment/project-comment.
     AppConfigModule,
     JwtCustomModule,
     BcryptModule,
+    BannerQuoteModule,
+    ProjectApproachModule,
     ServicesModule,
     ProjectsModule,
     ExperiencesModule,
@@ -44,6 +49,7 @@ import { ProjectCommentModule } from './modules/project-comment/project-comment.
     BlogCommentsModule,
     CloudinaryModule,
     ProjectCommentModule,
+    AboutMeModule,
   ],
   controllers: [AppController],
   providers: [

@@ -99,6 +99,8 @@ model User {
 
   systemSettings SystemSettings?
 
+  aboutMe AboutMe?
+
   services      Service[]
   projects      Project[]
   experiences   Experience[]
@@ -111,6 +113,71 @@ model User {
   updatedAt DateTime @updatedAt
 
   @@index([email])
+}
+
+/**
+ * =========================
+ * ABOUT ME
+ * =========================
+ */
+
+model AboutMe {
+  id     String @id @default(cuid())
+  userId String @unique
+
+  detailAboutMe String
+
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workSectors WorkSector[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
+
+/**
+ * =========================
+ * WORK SECTOR
+ * =========================
+ */
+
+model WorkSector {
+  id String @id @default(cuid())
+
+  aboutMeId String
+
+  sectorImg    String
+  sectorName   String
+  sectorDetail String
+
+  sortOrder Int     @default(0)
+  isActive  Boolean @default(true)
+
+  aboutMe AboutMe @relation(fields: [aboutMeId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([aboutMeId])
+  @@index([aboutMeId, sortOrder])
+}
+
+/**
+ * =========================
+ * BANNER QUOTE
+ * =========================
+ */
+
+model BannerQuote {
+  id String @id @default(cuid())
+
+  primaryText   String[]
+  secondaryText String[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 /**
@@ -186,17 +253,15 @@ model Project {
   status   ProjectStatus
   platform ProjectPlatform
 
-  approachTaken String?
-
   featured  Boolean @default(false)
   sortOrder Int     @default(0)
   isActive  Boolean @default(true)
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  tools         ProjectTool[]
-  comments      ProjectComment[]
-  approachSteps ProjectApproachStep[]
+  tools      ProjectTool[]
+  comments   ProjectComment[]
+  approaches ProjectApproach[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -209,18 +274,21 @@ model Project {
 
 /**
  * =========================
- * PROJECT APPROACH STEP
+ * PROJECT APPROACH
  * =========================
  */
 
-model ProjectApproachStep {
-  id        String @id @default(cuid())
+model ProjectApproach {
+  id String @id @default(cuid())
+
   projectId String
 
-  name   String
-  detail String
+  approachImg   String?
+  approachTitle String
+  detail        String[]
 
-  sortOrder Int @default(0)
+  sortOrder Int     @default(0)
+  isActive  Boolean @default(true)
 
   project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
@@ -295,8 +363,8 @@ model Experience {
   organization String
   role         String
 
-  responsibilities String
-  learned          String?
+  responsibilities String[]
+  learned          String[]
 
   location String?
   images   String[]
@@ -334,6 +402,7 @@ model ProcessStep {
 
   name   String
   detail String
+  img    String?
 
   sortOrder Int     @default(0)
   isActive  Boolean @default(true)

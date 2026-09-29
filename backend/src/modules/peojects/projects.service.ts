@@ -26,7 +26,14 @@ export class ProjectsService {
         githubLink: true,
         status: true,
         platform: true,
-        approachTaken: true,
+        approaches: {
+          where: {
+            isActive: true,
+          },
+          orderBy: {
+            sortOrder: 'asc',
+          },
+        },
         featured: true,
         sortOrder: true,
       },
@@ -82,6 +89,16 @@ export class ProjectsService {
     const project = await this.prisma.project.findUnique({
       where: {
         id,
+      },
+      include: {
+        approaches: {
+          where: {
+            isActive: true,
+          },
+          orderBy: {
+            sortOrder: 'asc',
+          },
+        },
       },
     });
 

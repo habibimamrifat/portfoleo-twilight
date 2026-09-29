@@ -1,4 +1,6 @@
 import {
+  ArrayMinSize,
+  IsArray,
   IsBoolean,
   IsDateString,
   IsEnum,
@@ -19,12 +21,15 @@ export class CreateExperienceDto {
   @IsString()
   role!: string;
 
-  @IsString()
-  responsibilities!: string;
+  @IsArray()
+  @ArrayMinSize(1)
+  @IsString({ each: true })
+  responsibilities!: string[];
 
-  @IsOptional()
-  @IsString()
-  learned?: string;
+  @IsArray()
+  @ArrayMinSize(1)
+  @IsString({ each: true })
+  learned!: string[];
 
   @IsOptional()
   @IsString()
@@ -97,12 +102,16 @@ export class UpdateExperienceDto {
   role?: string;
 
   @IsOptional()
-  @IsString()
-  responsibilities?: string;
+  @IsArray()
+  @ArrayMinSize(1)
+  @IsString({ each: true })
+  responsibilities?: string[];
 
   @IsOptional()
-  @IsString()
-  learned?: string;
+  @IsArray()
+  @ArrayMinSize(1)
+  @IsString({ each: true })
+  learned?: string[];
 
   @IsOptional()
   @IsString()

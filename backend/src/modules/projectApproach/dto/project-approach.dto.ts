@@ -1,6 +1,7 @@
 import {
+  ArrayMinSize,
+  IsArray,
   IsBoolean,
-  IsEnum,
   IsInt,
   IsOptional,
   IsString,
@@ -9,43 +10,18 @@ import {
 
 import { Transform } from 'class-transformer';
 
-import { ProjectPlatform, ProjectStatus } from '@prisma/client';
-
-export class CreateProjectDto {
+export class CreateProjectApproachDto {
   @IsString()
-  name!: string;
+  approachTitle!: string;
 
-  @IsString()
-  description!: string;
+  @IsArray()
+  @ArrayMinSize(1)
+  @IsString({ each: true })
+  detail!: string[];
 
   @IsOptional()
   @IsString()
-  liveLink?: string;
-
-  @IsOptional()
-  @IsString()
-  githubLink?: string;
-
-  @IsEnum(ProjectStatus)
-  status!: ProjectStatus;
-
-  @IsEnum(ProjectPlatform)
-  platform!: ProjectPlatform;
-
-  @IsOptional()
-  @Transform(({ value }) => {
-    if (value === 'true') {
-      return true;
-    }
-
-    if (value === 'false') {
-      return false;
-    }
-
-    return value;
-  })
-  @IsBoolean()
-  featured?: boolean;
+  approachImg?: string;
 
   @IsOptional()
   @Transform(({ value }) => {
@@ -75,45 +51,20 @@ export class CreateProjectDto {
   isActive?: boolean;
 }
 
-export class UpdateProjectDto {
+export class UpdateProjectApproachDto {
   @IsOptional()
   @IsString()
-  name?: string;
+  approachTitle?: string;
 
   @IsOptional()
-  @IsString()
-  description?: string;
-
-  @IsOptional()
-  @IsString()
-  liveLink?: string;
+  @IsArray()
+  @ArrayMinSize(1)
+  @IsString({ each: true })
+  detail?: string[];
 
   @IsOptional()
   @IsString()
-  githubLink?: string;
-
-  @IsOptional()
-  @IsEnum(ProjectStatus)
-  status?: ProjectStatus;
-
-  @IsOptional()
-  @IsEnum(ProjectPlatform)
-  platform?: ProjectPlatform;
-
-  @IsOptional()
-  @Transform(({ value }) => {
-    if (value === 'true') {
-      return true;
-    }
-
-    if (value === 'false') {
-      return false;
-    }
-
-    return value;
-  })
-  @IsBoolean()
-  featured?: boolean;
+  approachImg?: string;
 
   @IsOptional()
   @Transform(({ value }) => {
