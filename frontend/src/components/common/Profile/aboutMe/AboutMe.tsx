@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 
 import { getApi } from "@/api/getapi";
+import Appear from "../../animation/Appear";
+import Card from "../../util/Card";
 
 import AboutMeCreate from "./AboutmeCreate";
 import AboutMeUpdate from "./AboutMeUpdate";
@@ -24,7 +26,13 @@ export interface AboutMeData {
   workSectors: WorkSectorData[];
 }
 
-export default function AboutMe() {
+interface AboutMeProps {
+  isAdmin?: boolean;
+}
+
+export default function AboutMe({
+  isAdmin = false,
+}: AboutMeProps) {
   const [aboutMe, setAboutMe] =
     useState<AboutMeData | null>(null);
 
@@ -39,7 +47,7 @@ export default function AboutMe() {
         const response =
           await getApi(
             "/about-me",
-            true,
+            isAdmin,
           );
 
         const result =
@@ -78,14 +86,30 @@ export default function AboutMe() {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [isAdmin]);
 
   if (loading) {
     return null;
   }
 
   if (!aboutMe) {
-    return <AboutMeCreate />;
+    if (isAdmin) {
+      return <AboutMeCreate />;
+    }
+
+    return null;
+  }
+
+  if (!isAdmin) {
+    return (
+      <Appear delay={0.2}>
+        <Card className="p-8">
+          <p className="max-w-3xl text-base leading-8 text-white/60">
+            {aboutMe.detailAboutMe}
+          </p>
+        </Card>
+      </Appear>
+    );
   }
 
   return (

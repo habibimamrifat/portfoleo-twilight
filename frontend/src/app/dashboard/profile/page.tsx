@@ -19,7 +19,7 @@ export default function ProfilePage() {
       <div className="space-y-6">
         <ProfileInfo />
 
-        <AboutMe />
+        <AboutMe isAdmin/>
 
         <WorkSector />
 

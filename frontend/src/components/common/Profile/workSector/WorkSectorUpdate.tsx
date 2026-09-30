@@ -1,14 +1,14 @@
 "use client";
 
-import { useState } from "react";
-
+import { useEffect, useState } from "react";
 import {
   ImagePlus,
   Loader2,
   Save,
-  Trash2,
+  X,
 } from "lucide-react";
 
+import { getApi } from "@/api/getapi";
 import { callApi } from "@/api/callApi";
 
 interface WorkSectorData {
@@ -21,36 +21,102 @@ interface WorkSectorData {
   isActive: boolean;
 }
 
+interface WorkSectorUpdateProps {
+  sectorId: string;
+  onChanged: () => void;
+}
+
 export default function WorkSectorUpdate({
-  sector,
-  onUpdated,
-}: {
-  sector: WorkSectorData;
-  onUpdated: () => void;
-}) {
+  sectorId,
+  onChanged,
+}: WorkSectorUpdateProps) {
+  const [open, setOpen] = useState(false);
+
+  const [sector, setSector] =
+    useState<WorkSectorData | null>(null);
+
   const [sectorName, setSectorName] =
-    useState(sector.sectorName);
+    useState("");
 
   const [sectorDetail, setSectorDetail] =
-    useState(sector.sectorDetail);
+    useState("");
 
   const [sortOrder, setSortOrder] =
-    useState(String(sector.sortOrder));
+    useState("0");
 
   const [isActive, setIsActive] =
-    useState(sector.isActive);
+    useState(true);
 
   const [sectorImg, setSectorImg] =
     useState<File | null>(null);
 
-  const [saving, setSaving] =
+  const [loading, setLoading] =
     useState(false);
 
-  const [deleting, setDeleting] =
+  const [saving, setSaving] =
     useState(false);
 
   const [error, setError] =
     useState("");
+
+  useEffect(() => {
+    if (!open) return;
+
+    let mounted = true;
+
+    const loadSector = async () => {
+      try {
+        setLoading(true);
+        setError("");
+
+        const response = await getApi(
+          `/about-me/sectors/${sectorId}`,
+          true,
+        );
+
+        const result = await response.json();
+
+        if (!mounted) return;
+
+        if (!response.ok) {
+          throw new Error(
+            result.message ||
+              "Failed to load work sector",
+          );
+        }
+
+        const data =
+          result.data ?? result;
+
+        setSector(data);
+        setSectorName(data.sectorName);
+        setSectorDetail(data.sectorDetail);
+        setSortOrder(
+          String(data.sortOrder),
+        );
+        setIsActive(data.isActive);
+        setSectorImg(null);
+      } catch (err) {
+        if (mounted) {
+          setError(
+            err instanceof Error
+              ? err.message
+              : "Something went wrong",
+          );
+        }
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadSector();
+
+    return () => {
+      mounted = false;
+    };
+  }, [open, sectorId]);
 
   const handleSubmit = async () => {
     if (!sectorName.trim()) {
@@ -96,16 +162,14 @@ export default function WorkSectorUpdate({
         );
       }
 
-      const response =
-        await callApi(
-          `/about-me/sectors/${sector.id}`,
-          "PATCH",
-          formData,
-          true,
-        );
+      const response = await callApi(
+        `/about-me/sectors/${sectorId}`,
+        "PATCH",
+        formData,
+        true,
+      );
 
-      const result =
-        await response.json();
+      const result = await response.json();
 
       if (!response.ok) {
         throw new Error(
@@ -114,9 +178,10 @@ export default function WorkSectorUpdate({
         );
       }
 
+      setOpen(false);
       setSectorImg(null);
 
-      onUpdated();
+      onChanged();
     } catch (err) {
       setError(
         err instanceof Error
@@ -128,251 +193,253 @@ export default function WorkSectorUpdate({
     }
   };
 
-  const handleDelete = async () => {
-    const confirmed =
-      window.confirm(
-        "Are you sure you want to delete this work sector?",
-      );
-
-    if (!confirmed) {
-      return;
-    }
-
-    try {
-      setDeleting(true);
-      setError("");
-
-      const response =
-        await callApi(
-          `/about-me/sectors/${sector.id}`,
-          "DELETE",
-          undefined,
-          true,
-        );
-
-      const result =
-        await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          result.message ||
-            "Failed to delete work sector",
-        );
-      }
-
-      onUpdated();
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Something went wrong",
-      );
-    } finally {
-      setDeleting(false);
-    }
-  };
+  if (!open) {
+    return (
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="
+          inline-flex items-center gap-2
+          rounded-xl border border-white/10
+          bg-white/5 px-3 py-2
+          text-xs text-white/70
+          transition hover:bg-white/10
+        "
+      >
+        Update
+      </button>
+    );
+  }
 
   return (
     <div
       className="
-        rounded-2xl border border-white/10
-        bg-white/[0.03] p-5
+        fixed inset-0 z-50
+        flex items-center justify-center
+        bg-black/60 p-4
+        backdrop-blur-sm
       "
     >
-      <div className="mb-5 flex items-center justify-between gap-4">
-        <h3 className="text-sm font-medium text-white">
-          {sector.sectorName}
-        </h3>
-
-        <button
-          type="button"
-          onClick={handleDelete}
-          disabled={
-            saving || deleting
-          }
-          className="
-            inline-flex items-center gap-2
-            rounded-xl border border-red-400/20
-            bg-red-500/10 px-3 py-2
-            text-xs text-red-300
-            transition hover:bg-red-500/20
-            disabled:cursor-not-allowed
-            disabled:opacity-50
-          "
-        >
-          {deleting ? (
-            <Loader2
-              size={15}
-              className="animate-spin"
-            />
-          ) : (
-            <Trash2 size={15} />
-          )}
-
-          Delete
-        </button>
-      </div>
-
-      {error && (
-        <div
-          className="
-            mb-5 rounded-2xl border
-            border-red-400/20 bg-red-500/10
-            px-4 py-3 text-sm text-red-300
-          "
-        >
-          {error}
-        </div>
-      )}
-
-      <div className="grid gap-4 md:grid-cols-2">
-        <input
-          value={sectorName}
-          onChange={(event) =>
-            setSectorName(
-              event.target.value,
-            )
-          }
-          placeholder="Sector name"
-          className="
-            rounded-2xl border border-white/15
-            bg-white/5 px-4 py-3
-            text-sm text-white
-            outline-none
-            placeholder:text-white/25
-            focus:border-white/30
-          "
-        />
-
-        <input
-          type="number"
-          min="0"
-          value={sortOrder}
-          onChange={(event) =>
-            setSortOrder(
-              event.target.value,
-            )
-          }
-          placeholder="Sort order"
-          className="
-            rounded-2xl border border-white/15
-            bg-white/5 px-4 py-3
-            text-sm text-white
-            outline-none
-            placeholder:text-white/25
-            focus:border-white/30
-          "
-        />
-      </div>
-
-      <textarea
-        value={sectorDetail}
-        onChange={(event) =>
-          setSectorDetail(
-            event.target.value,
-          )
-        }
-        placeholder="Describe this sector..."
-        rows={4}
+      <div
         className="
-          mt-4 w-full resize-y
-          rounded-2xl border border-white/15
-          bg-white/5 px-4 py-3
-          text-sm text-white
-          outline-none
-          placeholder:text-white/25
-          focus:border-white/30
+          max-h-[90vh] w-full max-w-2xl
+          overflow-y-auto
+          rounded-3xl border border-white/20
+          bg-[#111827] p-6
+          shadow-[0_25px_80px_rgba(0,0,0,0.6)]
         "
-      />
+      >
+        <div className="mb-6 flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-medium text-white">
+              Update Work Sector
+            </h3>
 
-      <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-center">
-        <div className="overflow-hidden rounded-xl border border-white/10">
-          <img
-            src={sector.sectorImg}
-            alt={sector.sectorName}
-            className="h-20 w-20 object-cover"
-          />
+            <p className="mt-1 text-sm text-white/40">
+              Update the information for this sector.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setOpen(false)}
+            disabled={saving}
+            className="
+              rounded-xl border border-white/10
+              bg-white/5 p-2
+              text-white/60
+              transition hover:bg-white/10
+              disabled:opacity-50
+            "
+          >
+            <X size={18} />
+          </button>
         </div>
 
-        <label
-          className="
-            flex flex-1 cursor-pointer
-            items-center gap-3
-            rounded-2xl border border-white/15
-            bg-white/5 px-4 py-3
-            text-sm text-white/60
-            transition hover:bg-white/10
-          "
-        >
-          <ImagePlus size={18} />
+        {loading ? (
+          <div className="flex min-h-[250px] items-center justify-center">
+            <Loader2
+              size={28}
+              className="animate-spin text-white/50"
+            />
+          </div>
+        ) : (
+          <>
+            {error && (
+              <div
+                className="
+                  mb-5 rounded-2xl border
+                  border-red-400/20
+                  bg-red-500/10
+                  px-4 py-3
+                  text-sm text-red-300
+                "
+              >
+                {error}
+              </div>
+            )}
 
-          <span>
-            {sectorImg
-              ? sectorImg.name
-              : "Replace sector image"}
-          </span>
+            {sector && (
+              <>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <input
+                    value={sectorName}
+                    onChange={(event) =>
+                      setSectorName(
+                        event.target.value,
+                      )
+                    }
+                    placeholder="Sector name"
+                    className="
+                      rounded-2xl
+                      border border-white/15
+                      bg-white/5 px-4 py-3
+                      text-sm text-white
+                      outline-none
+                      placeholder:text-white/25
+                      focus:border-white/30
+                    "
+                  />
 
-          <input
-            type="file"
-            accept="image/*"
-            onChange={(event) =>
-              setSectorImg(
-                event.target.files?.[0] ??
-                  null,
-              )
-            }
-            className="hidden"
-          />
-        </label>
-      </div>
+                  <input
+                    type="number"
+                    min="0"
+                    value={sortOrder}
+                    onChange={(event) =>
+                      setSortOrder(
+                        event.target.value,
+                      )
+                    }
+                    placeholder="Sort order"
+                    className="
+                      rounded-2xl
+                      border border-white/15
+                      bg-white/5 px-4 py-3
+                      text-sm text-white
+                      outline-none
+                      placeholder:text-white/25
+                      focus:border-white/30
+                    "
+                  />
+                </div>
 
-      <label className="mt-4 flex items-center gap-3 text-sm text-white/60">
-        <input
-          type="checkbox"
-          checked={isActive}
-          onChange={(event) =>
-            setIsActive(
-              event.target.checked,
-            )
-          }
-          className="h-4 w-4"
-        />
+                <textarea
+                  value={sectorDetail}
+                  onChange={(event) =>
+                    setSectorDetail(
+                      event.target.value,
+                    )
+                  }
+                  placeholder="Describe this sector..."
+                  rows={4}
+                  className="
+                    mt-4 w-full resize-y
+                    rounded-2xl
+                    border border-white/15
+                    bg-white/5 px-4 py-3
+                    text-sm text-white
+                    outline-none
+                    placeholder:text-white/25
+                    focus:border-white/30
+                  "
+                />
 
-        Active
-      </label>
+                <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-center">
+                  <div className="overflow-hidden rounded-xl border border-white/10">
+                    <img
+                      src={sector.sectorImg}
+                      alt={sector.sectorName}
+                      className="
+                        h-20 w-20
+                        object-cover
+                      "
+                    />
+                  </div>
 
-      <div className="mt-5 flex justify-end">
-        <button
-          type="button"
-          onClick={handleSubmit}
-          disabled={
-            saving || deleting
-          }
-          className="
-            inline-flex items-center gap-2
-            rounded-2xl border border-white/20
-            bg-white/10 px-5 py-3
-            text-sm font-medium text-white
-            transition hover:bg-white/15
-            disabled:cursor-not-allowed
-            disabled:opacity-50
-          "
-        >
-          {saving ? (
-            <>
-              <Loader2
-                size={17}
-                className="animate-spin"
-              />
-              Saving...
-            </>
-          ) : (
-            <>
-              <Save size={17} />
-              Save Sector
-            </>
-          )}
-        </button>
+                  <label
+                    className="
+                      flex flex-1 cursor-pointer
+                      items-center gap-3
+                      rounded-2xl
+                      border border-white/15
+                      bg-white/5 px-4 py-3
+                      text-sm text-white/60
+                      transition hover:bg-white/10
+                    "
+                  >
+                    <ImagePlus size={18} />
+
+                    <span>
+                      {sectorImg
+                        ? sectorImg.name
+                        : "Replace sector image"}
+                    </span>
+
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(event) =>
+                        setSectorImg(
+                          event.target.files?.[0] ??
+                            null,
+                        )
+                      }
+                      className="hidden"
+                    />
+                  </label>
+                </div>
+
+                <label className="mt-4 flex items-center gap-3 text-sm text-white/60">
+                  <input
+                    type="checkbox"
+                    checked={isActive}
+                    onChange={(event) =>
+                      setIsActive(
+                        event.target.checked,
+                      )
+                    }
+                    className="h-4 w-4"
+                  />
+
+                  Active
+                </label>
+
+                <div className="mt-6 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={handleSubmit}
+                    disabled={saving}
+                    className="
+                      inline-flex items-center gap-2
+                      rounded-2xl
+                      border border-white/20
+                      bg-white/10 px-5 py-3
+                      text-sm font-medium text-white
+                      transition hover:bg-white/15
+                      disabled:cursor-not-allowed
+                      disabled:opacity-50
+                    "
+                  >
+                    {saving ? (
+                      <>
+                        <Loader2
+                          size={17}
+                          className="animate-spin"
+                        />
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <Save size={17} />
+                        Update Sector
+                      </>
+                    )}
+                  </button>
+                </div>
+              </>
+            )}
+          </>
+        )}
       </div>
     </div>
   );
