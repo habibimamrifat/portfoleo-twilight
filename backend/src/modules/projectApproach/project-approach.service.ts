@@ -17,24 +17,23 @@ export class ProjectApproachService {
   ) {}
 
   async findAll(projectId: string) {
-    await this.ensureProjectExists(projectId);
+    const project = await this.prisma.project.findUnique({
+      where: {
+        id: projectId,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!project) {
+      throw new NotFoundException('Project not found');
+    }
 
     return this.prisma.projectApproach.findMany({
       where: {
         projectId,
-        isActive: true,
       },
-
-      select: {
-        id: true,
-        projectId: true,
-        approachImg: true,
-        approachTitle: true,
-        detail: true,
-        sortOrder: true,
-        isActive: true,
-      },
-
       orderBy: {
         sortOrder: 'asc',
       },
@@ -46,17 +45,28 @@ export class ProjectApproachService {
     createProjectApproachDto: CreateProjectApproachDto,
     approachImg?: Express.Multer.File,
   ) {
-    await this.ensureProjectExists(projectId);
+    const project = await this.prisma.project.findUnique({
+      where: {
+        id: projectId,
+      },
+      select: {
+        id: true,
+      },
+    });
 
-    let imageUrl: string | undefined;
+    if (!project) {
+      throw new NotFoundException('Project not found');
+    }
+
+    let approachImgUrl: string | undefined;
 
     if (approachImg) {
       const uploadedImage = await this.cloudinaryService.uploadImage(
         approachImg,
-        'project-approaches',
+        'projects/approaches',
       );
 
-      imageUrl = uploadedImage.url;
+      approachImgUrl = uploadedImage.url;
     }
 
     return this.prisma.projectApproach.create({
@@ -67,7 +77,7 @@ export class ProjectApproachService {
 
         detail: createProjectApproachDto.detail,
 
-        approachImg: imageUrl ?? createProjectApproachDto.approachImg ?? null,
+        approachImg: approachImgUrl,
 
         sortOrder: createProjectApproachDto.sortOrder ?? 0,
 
@@ -97,47 +107,51 @@ export class ProjectApproachService {
   ) {
     const existingApproach = await this.findOne(id);
 
-    let imageUrl = existingApproach.approachImg;
+    let approachImgUrl = existingApproach.approachImg;
 
     if (approachImg) {
       const uploadedImage = await this.cloudinaryService.uploadImage(
         approachImg,
-        'project-approaches',
+        'projects/approaches',
       );
 
-      imageUrl = uploadedImage.url;
+      approachImgUrl = uploadedImage.url;
     }
 
     return this.prisma.projectApproach.update({
       where: {
         id,
       },
-
       data: {
-        ...(updateProjectApproachDto.approachTitle !== undefined && {
-          approachTitle: updateProjectApproachDto.approachTitle,
-        }),
+        ...(updateProjectApproachDto.approachTitle !== undefined
+          ? {
+              approachTitle: updateProjectApproachDto.approachTitle,
+            }
+          : {}),
 
-        ...(updateProjectApproachDto.detail !== undefined && {
-          detail: updateProjectApproachDto.detail,
-        }),
+        ...(updateProjectApproachDto.detail !== undefined
+          ? {
+              detail: updateProjectApproachDto.detail,
+            }
+          : {}),
 
-        ...(updateProjectApproachDto.sortOrder !== undefined && {
-          sortOrder: updateProjectApproachDto.sortOrder,
-        }),
+        ...(updateProjectApproachDto.sortOrder !== undefined
+          ? {
+              sortOrder: updateProjectApproachDto.sortOrder,
+            }
+          : {}),
 
-        ...(updateProjectApproachDto.isActive !== undefined && {
-          isActive: updateProjectApproachDto.isActive,
-        }),
+        ...(updateProjectApproachDto.isActive !== undefined
+          ? {
+              isActive: updateProjectApproachDto.isActive,
+            }
+          : {}),
 
-        ...(approachImg && {
-          approachImg: imageUrl,
-        }),
-
-        ...(updateProjectApproachDto.approachImg !== undefined &&
-          !approachImg && {
-            approachImg: updateProjectApproachDto.approachImg,
-          }),
+        ...(approachImg
+          ? {
+              approachImg: approachImgUrl,
+            }
+          : {}),
       },
     });
   }
@@ -154,21 +168,5 @@ export class ProjectApproachService {
     return {
       message: 'Project approach deleted successfully',
     };
-  }
-
-  private async ensureProjectExists(projectId: string) {
-    const project = await this.prisma.project.findUnique({
-      where: {
-        id: projectId,
-      },
-
-      select: {
-        id: true,
-      },
-    });
-
-    if (!project) {
-      throw new NotFoundException('Project not found');
-    }
   }
 }

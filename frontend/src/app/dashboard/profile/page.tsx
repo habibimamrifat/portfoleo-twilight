@@ -1,5 +1,6 @@
-import ProfileInfo from "@/components/common/Profile/ProfileInfo";
 import Banner from "@/components/common/Profile/Banner";
+import ProfileInfo from "@/components/common/Profile/ProfileInfo";
+
 import AboutMe from "@/components/common/Profile/aboutMe/AboutMe";
 import WorkSector from "@/components/common/Profile/workSector/WorkSector";
 
@@ -19,9 +20,9 @@ export default function ProfilePage() {
       <div className="space-y-6">
         <ProfileInfo />
 
-        <AboutMe isAdmin/>
+        <AboutMe isAdmin={true} />
 
-        <WorkSector />
+        <WorkSector isAdmin={true}/>
 
         <Banner />
       </div>

@@ -3,6 +3,7 @@
 import Image from "next/image";
 
 import WorkSectorAction from "./WorkSectorAction";
+import Card from "../../util/Card";
 
 export interface WorkSectorData {
   id: string;
@@ -26,10 +27,11 @@ export default function EachWorkSectorCard({
   isAdmin = false,
 }: EachWorkSectorCardProps) {
   return (
-    <div
+    <Card
       className="
-        rounded-2xl border border-white/10
-        bg-white/[0.03] p-5
+        w-full
+        md:w-[calc(50%-0.5rem)]
+        p-5
       "
     >
       <div className="flex items-start justify-between gap-4">
@@ -94,6 +96,6 @@ export default function EachWorkSectorCard({
           </span>
         </div>
       )}
-    </div>
+    </Card>
   );
 }

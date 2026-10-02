@@ -33,7 +33,6 @@ interface ProjectFormData {
   githubLink: string;
   status: ProjectStatus;
   platform: ProjectPlatform;
-  approachTaken: string;
   featured: boolean;
   sortOrder: number;
 }
@@ -57,7 +56,6 @@ const emptyForm: ProjectFormData = {
   githubLink: "",
   status: "IN_PROGRESS",
   platform: "WEBSITE",
-  approachTaken: "",
   featured: false,
   sortOrder: 0,
 };
@@ -334,13 +332,6 @@ export default function ProjectForm({
         form.platform,
       );
 
-      if (form.approachTaken.trim()) {
-        formData.append(
-          "approachTaken",
-          form.approachTaken.trim(),
-        );
-      }
-
       formData.append(
         "featured",
         String(form.featured),
@@ -574,28 +565,6 @@ export default function ProjectForm({
             className="h-11 w-full rounded-xl border border-white/10 bg-white/5 px-4 text-sm text-white outline-none placeholder:text-white/25 focus:border-white/25"
           />
         </div>
-      </div>
-
-      {/* APPROACH */}
-
-      <div>
-        <label className="mb-2 block text-sm text-white/60">
-          Approach Taken
-        </label>
-
-        <textarea
-          value={form.approachTaken}
-          onChange={(event) =>
-            setForm((previous) => ({
-              ...previous,
-              approachTaken:
-                event.target.value,
-            }))
-          }
-          rows={6}
-          placeholder="Explain the architecture, approach, challenges, or implementation..."
-          className="w-full resize-y rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm leading-6 text-white outline-none placeholder:text-white/25 focus:border-white/25"
-        />
       </div>
 
       {/* IMAGES */}

@@ -5,6 +5,7 @@ import Link from "next/link";
 import {
   ArrowUpRight,
   Edit3,
+  ListChecks,
   Trash2,
 } from "lucide-react";
 
@@ -109,6 +110,19 @@ export default function ProjectCard({
           {/* Admin Actions */}
           {isAdmin && (
             <>
+              {/* Manage Project Approach */}
+              <Link
+                href={`/dashboard/projects/${project.id}/approach`}
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white/50 transition hover:bg-white/10 hover:text-white"
+                title="Manage project approach"
+              >
+                <ListChecks
+                  size={17}
+                  strokeWidth={1.6}
+                />
+              </Link>
+
+              {/* Edit Project */}
               <Link
                 href={`/dashboard/projects/${project.id}/edit`}
                 className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white/50 transition hover:bg-white/10 hover:text-white"
@@ -120,6 +134,7 @@ export default function ProjectCard({
                 />
               </Link>
 
+              {/* Delete Project */}
               <button
                 type="button"
                 onClick={handleDelete}

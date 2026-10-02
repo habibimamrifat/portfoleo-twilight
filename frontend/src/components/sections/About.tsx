@@ -2,7 +2,8 @@
 
 import Appear from "../common/animation/Appear";
 import AboutMe from "../common/Profile/aboutMe/AboutMe";
-import WorkSectorList from "../common/Profile/workSector/WorkSectorList";
+import WorkSector from "../common/Profile/workSector/WorkSector";
+
 
 export default function About() {
   return (
@@ -22,10 +23,8 @@ export default function About() {
             </h2>
           </div>
         </Appear>
-
         <AboutMe />
-
-        <WorkSectorList />
+        <WorkSector isAdmin={false} />
       </div>
     </section>
   );

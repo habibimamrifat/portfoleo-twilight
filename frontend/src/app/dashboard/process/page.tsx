@@ -1,6 +1,6 @@
-
 "use client";
 
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import {
   Plus,
@@ -8,17 +8,18 @@ import {
   Trash2,
   X,
   Workflow,
+  ImagePlus,
 } from "lucide-react";
 
 import Card from "@/components/common/util/Card";
 import { callApi } from "@/api/callApi";
 import { getApi } from "@/api/getapi";
 
-
 interface ProcessStep {
   id: string;
   name: string;
   detail: string;
+  img?: string | null;
   sortOrder: number;
   isActive: boolean;
 }
@@ -26,6 +27,7 @@ interface ProcessStep {
 interface ProcessStepForm {
   name: string;
   detail: string;
+  img: File | null;
   sortOrder: string;
   isActive: boolean;
 }
@@ -33,9 +35,36 @@ interface ProcessStepForm {
 const emptyForm: ProcessStepForm = {
   name: "",
   detail: "",
+  img: null,
   sortOrder: "0",
   isActive: true,
 };
+
+function getImageUrl(image?: string | null) {
+  if (!image) {
+    return null;
+  }
+
+  const trimmed = image.trim();
+
+  if (!trimmed) {
+    return null;
+  }
+
+  if (
+    trimmed.startsWith("http://") ||
+    trimmed.startsWith("https://") ||
+    trimmed.startsWith("blob:")
+  ) {
+    return trimmed;
+  }
+
+  if (trimmed.startsWith("/")) {
+    return trimmed;
+  }
+
+  return `/${trimmed}`;
+}
 
 export default function ProcessPage() {
   const [processSteps, setProcessSteps] = useState<
@@ -52,6 +81,12 @@ export default function ProcessPage() {
 
   const [form, setForm] =
     useState<ProcessStepForm>(emptyForm);
+
+  const [existingImage, setExistingImage] =
+    useState<string | null>(null);
+
+  const [imagePreview, setImagePreview] =
+    useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -112,6 +147,8 @@ export default function ProcessPage() {
   const resetForm = () => {
     setForm(emptyForm);
     setEditingId(null);
+    setExistingImage(null);
+    setImagePreview(null);
   };
 
   const openCreateModal = () => {
@@ -122,9 +159,15 @@ export default function ProcessPage() {
   const openEditModal = (step: ProcessStep) => {
     setEditingId(step.id);
 
+    const imageUrl = getImageUrl(step.img);
+
+    setExistingImage(imageUrl);
+    setImagePreview(null);
+
     setForm({
       name: step.name ?? "",
       detail: step.detail ?? "",
+      img: null,
       sortOrder: String(step.sortOrder ?? 0),
       isActive: step.isActive ?? true,
     });
@@ -161,6 +204,46 @@ export default function ProcessPage() {
     }));
   };
 
+  const handleImageChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = e.target.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    if (!file.type.startsWith("image/")) {
+      alert("Please select a valid image.");
+      e.target.value = "";
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Image size must be less than 5MB.");
+      e.target.value = "";
+      return;
+    }
+
+    setForm((prev) => ({
+      ...prev,
+      img: file,
+    }));
+
+    const previewUrl = URL.createObjectURL(file);
+
+    setImagePreview(previewUrl);
+  };
+
+  const handleRemoveImage = () => {
+    setForm((prev) => ({
+      ...prev,
+      img: null,
+    }));
+
+    setImagePreview(null);
+  };
+
   const handleSubmit = async (
     e: React.FormEvent<HTMLFormElement>,
   ) => {
@@ -179,24 +262,48 @@ export default function ProcessPage() {
     setSaving(true);
 
     try {
-      const body = {
-        name: form.name.trim(),
-        detail: form.detail.trim(),
-        sortOrder: Number(form.sortOrder) || 0,
-        isActive: form.isActive,
-      };
+      const formData = new FormData();
+
+      formData.append(
+        "name",
+        form.name.trim(),
+      );
+
+      formData.append(
+        "detail",
+        form.detail.trim(),
+      );
+
+      if (form.sortOrder !== "") {
+        formData.append(
+          "sortOrder",
+          form.sortOrder,
+        );
+      }
+
+      formData.append(
+        "isActive",
+        String(form.isActive),
+      );
+
+      if (form.img) {
+        formData.append(
+          "img",
+          form.img,
+        );
+      }
 
       const response = editingId
         ? await callApi(
             `/process-steps/${editingId}`,
             "PATCH",
-            body,
+            formData,
             true,
           )
         : await callApi(
             "/process-steps",
             "POST",
-            body,
+            formData,
             true,
           );
 
@@ -378,18 +485,35 @@ export default function ProcessPage() {
               className="p-5 backdrop-blur-xs"
             >
               <div className="flex items-start gap-4">
-                {/* Step Number */}
+                {/* Step Image */}
                 <div
                   className="
-                    flex h-11 w-11 shrink-0
+                    relative
+                    flex h-16 w-16 shrink-0
                     items-center justify-center
+                    overflow-hidden
                     rounded-2xl
                     border border-white/10
                     bg-white/5
-                    text-sm text-white/60
                   "
                 >
-                  {String(index + 1).padStart(2, "0")}
+                  {step.img ? (
+                    <Image
+                      src={getImageUrl(step.img) || ""}
+                      alt={step.name}
+                      fill
+                      unoptimized
+                      className="object-cover"
+                      sizes="64px"
+                    />
+                  ) : (
+                    <span className="text-sm text-white/40">
+                      {String(index + 1).padStart(
+                        2,
+                        "0",
+                      )}
+                    </span>
+                  )}
                 </div>
 
                 {/* Content */}
@@ -601,6 +725,113 @@ export default function ProcessPage() {
                       focus:border-white/30
                     "
                   />
+                </div>
+
+                {/* Image */}
+                <div>
+                  <label className="mb-2 block text-xs text-white/50">
+                    Process Image
+                  </label>
+
+                  <div className="relative overflow-hidden rounded-2xl border border-dashed border-white/15 bg-white/5">
+                    {imagePreview || existingImage ? (
+                      <div className="relative h-48 w-full">
+                        <Image
+                          src={
+                            imagePreview ||
+                            existingImage ||
+                            ""
+                          }
+                          alt="Process preview"
+                          fill
+                          unoptimized
+                          className="object-cover"
+                          sizes="(max-width: 768px) 100vw, 672px"
+                        />
+
+                        <div className="absolute right-3 top-3 flex gap-2">
+                          <label
+                            htmlFor="process-image"
+                            className="
+                              flex h-9
+                              cursor-pointer
+                              items-center gap-2
+                              rounded-xl
+                              border border-white/10
+                              bg-black/50
+                              px-3
+                              text-xs text-white/80
+                              backdrop-blur-md
+                              transition
+                              hover:bg-black/70
+                            "
+                          >
+                            <ImagePlus size={14} />
+                            Change
+                          </label>
+
+                          <button
+                            type="button"
+                            onClick={
+                              handleRemoveImage
+                            }
+                            className="
+                              flex h-9 w-9
+                              items-center justify-center
+                              rounded-xl
+                              border border-white/10
+                              bg-black/50
+                              text-white/70
+                              backdrop-blur-md
+                              transition
+                              hover:bg-black/70
+                              hover:text-white
+                            "
+                            title="Remove image"
+                          >
+                            <X size={15} />
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <label
+                        htmlFor="process-image"
+                        className="
+                          flex h-48
+                          cursor-pointer
+                          flex-col
+                          items-center
+                          justify-center
+                          text-center
+                          transition
+                          hover:bg-white/10
+                        "
+                      >
+                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-white/5">
+                          <ImagePlus
+                            size={20}
+                            className="text-white/40"
+                          />
+                        </div>
+
+                        <p className="mt-3 text-sm text-white/60">
+                          Upload process image
+                        </p>
+
+                        <p className="mt-1 text-xs text-white/30">
+                          PNG, JPG, WEBP — max 5MB
+                        </p>
+                      </label>
+                    )}
+
+                    <input
+                      id="process-image"
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp"
+                      onChange={handleImageChange}
+                      className="hidden"
+                    />
+                  </div>
                 </div>
 
                 {/* Sort Order */}

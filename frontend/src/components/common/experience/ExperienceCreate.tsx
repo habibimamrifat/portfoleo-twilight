@@ -14,6 +14,7 @@ import {
   CalendarDays,
   ImagePlus,
   Loader2,
+  Plus,
   Save,
   Trash2,
   X,
@@ -34,8 +35,8 @@ type EmploymentType =
 interface ExperienceForm {
   organization: string;
   role: string;
-  responsibilities: string;
-  learned: string;
+  responsibilities: string[];
+  learned: string[];
   location: string;
   employmentType: EmploymentType;
   startDate: string;
@@ -55,8 +56,8 @@ const MAX_IMAGES = 10;
 const initialForm: ExperienceForm = {
   organization: "",
   role: "",
-  responsibilities: "",
-  learned: "",
+  responsibilities: [""],
+  learned: [""],
   location: "",
   employmentType: "FULL_TIME",
   startDate: "",
@@ -114,6 +115,106 @@ export default function ExperienceCreate({
     setError(null);
     setSuccess(null);
   };
+
+  /*
+   * =========================
+   * RESPONSIBILITIES
+   * =========================
+   */
+
+  const updateResponsibility = (
+    index: number,
+    value: string,
+  ) => {
+    setForm((previous) => ({
+      ...previous,
+      responsibilities:
+        previous.responsibilities.map(
+          (item, itemIndex) =>
+            itemIndex === index
+              ? value
+              : item,
+        ),
+    }));
+
+    setError(null);
+    setSuccess(null);
+  };
+
+  const addResponsibility = () => {
+    setForm((previous) => ({
+      ...previous,
+      responsibilities: [
+        ...previous.responsibilities,
+        "",
+      ],
+    }));
+  };
+
+  const removeResponsibility = (
+    index: number,
+  ) => {
+    setForm((previous) => ({
+      ...previous,
+      responsibilities:
+        previous.responsibilities.filter(
+          (_, itemIndex) =>
+            itemIndex !== index,
+        ),
+    }));
+  };
+
+  /*
+   * =========================
+   * LEARNED
+   * =========================
+   */
+
+  const updateLearned = (
+    index: number,
+    value: string,
+  ) => {
+    setForm((previous) => ({
+      ...previous,
+      learned: previous.learned.map(
+        (item, itemIndex) =>
+          itemIndex === index
+            ? value
+            : item,
+      ),
+    }));
+
+    setError(null);
+    setSuccess(null);
+  };
+
+  const addLearned = () => {
+    setForm((previous) => ({
+      ...previous,
+      learned: [
+        ...previous.learned,
+        "",
+      ],
+    }));
+  };
+
+  const removeLearned = (
+    index: number,
+  ) => {
+    setForm((previous) => ({
+      ...previous,
+      learned: previous.learned.filter(
+        (_, itemIndex) =>
+          itemIndex !== index,
+      ),
+    }));
+  };
+
+  /*
+   * =========================
+   * IMAGES
+   * =========================
+   */
 
   const handleImageChange = (
     event: ChangeEvent<HTMLInputElement>,
@@ -218,6 +319,12 @@ export default function ExperienceCreate({
     }
   };
 
+  /*
+   * =========================
+   * RESET
+   * =========================
+   */
+
   const resetForm = () => {
     clearImages();
 
@@ -225,6 +332,12 @@ export default function ExperienceCreate({
     setError(null);
     setSuccess(null);
   };
+
+  /*
+   * =========================
+   * SUBMIT
+   * =========================
+   */
 
   const handleSubmit = async (
     event: FormEvent<HTMLFormElement>,
@@ -254,13 +367,24 @@ export default function ExperienceCreate({
         );
       }
 
+      const cleanedResponsibilities =
+        form.responsibilities
+          .map((item) => item.trim())
+          .filter(Boolean);
+
       if (
-        !form.responsibilities.trim()
+        cleanedResponsibilities.length ===
+        0
       ) {
         throw new Error(
-          "Responsibilities are required.",
+          "At least one responsibility is required.",
         );
       }
+
+      const cleanedLearned =
+        form.learned
+          .map((item) => item.trim())
+          .filter(Boolean);
 
       if (!form.startDate) {
         throw new Error(
@@ -310,17 +434,31 @@ export default function ExperienceCreate({
         form.role.trim(),
       );
 
-      formData.append(
-        "responsibilities",
-        form.responsibilities.trim(),
+      /*
+       * Send each responsibility
+       * as an array item.
+       */
+      cleanedResponsibilities.forEach(
+        (responsibility) => {
+          formData.append(
+            "responsibilities",
+            responsibility,
+          );
+        },
       );
 
-      if (form.learned.trim()) {
-        formData.append(
-          "learned",
-          form.learned.trim(),
-        );
-      }
+      /*
+       * Send each learned item
+       * as an array item.
+       */
+      cleanedLearned.forEach(
+        (item) => {
+          formData.append(
+            "learned",
+            item,
+          );
+        },
+      );
 
       if (form.location.trim()) {
         formData.append(
@@ -395,8 +533,10 @@ export default function ExperienceCreate({
 
       if (!response.ok) {
         throw new Error(
-          result?.message ||
-            "Failed to create experience.",
+          Array.isArray(result?.message)
+            ? result.message.join(", ")
+            : result?.message ||
+                "Failed to create experience.",
         );
       }
 
@@ -429,6 +569,10 @@ export default function ExperienceCreate({
     <div className="w-full">
       <Card className="p-5 sm:p-7 lg:p-10">
         <div className="mx-auto w-full max-w-6xl">
+          {/* =========================
+              HEADER
+          ========================= */}
+
           <div className="mb-8">
             <div className="flex items-center gap-3">
               <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/5">
@@ -452,6 +596,10 @@ export default function ExperienceCreate({
             </div>
           </div>
 
+          {/* =========================
+              ERROR
+          ========================= */}
+
           {error && (
             <div className="mb-6 flex items-start justify-between gap-4 rounded-xl border border-red-400/20 bg-red-400/5 px-4 py-3">
               <p className="text-sm leading-6 text-red-300">
@@ -470,6 +618,10 @@ export default function ExperienceCreate({
             </div>
           )}
 
+          {/* =========================
+              SUCCESS
+          ========================= */}
+
           {success && (
             <div className="mb-6 rounded-xl border border-green-400/20 bg-green-500/5 px-4 py-3 text-sm text-green-300">
               {success}
@@ -480,6 +632,10 @@ export default function ExperienceCreate({
             onSubmit={handleSubmit}
             className="space-y-8"
           >
+            {/* =========================
+                BASIC INFORMATION
+            ========================= */}
+
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
               <div>
                 <label className="mb-2 block text-sm text-white/50">
@@ -682,41 +838,182 @@ export default function ExperienceCreate({
               </div>
             </div>
 
-            <div>
-              <label className="mb-2 block text-sm text-white/50">
-                Responsibilities
-              </label>
-
-              <textarea
-                name="responsibilities"
-                value={
-                  form.responsibilities
-                }
-                onChange={
-                  handleChange
-                }
-                rows={8}
-                placeholder="Describe your responsibilities and work..."
-                className="w-full resize-y rounded-xl border border-white/10 bg-white/5 px-4 py-4 text-sm leading-7 text-white outline-none transition placeholder:text-white/20 focus:border-white/20 focus:bg-white/10"
-              />
-            </div>
+            {/* =========================
+                RESPONSIBILITIES ARRAY
+            ========================= */}
 
             <div>
-              <label className="mb-2 block text-sm text-white/50">
-                What I Learned
-              </label>
+              <div className="mb-3 flex items-center justify-between gap-4">
+                <div>
+                  <label className="block text-sm text-white/50">
+                    Responsibilities
+                  </label>
 
-              <textarea
-                name="learned"
-                value={form.learned}
-                onChange={
-                  handleChange
-                }
-                rows={6}
-                placeholder="What did you learn from this experience?"
-                className="w-full resize-y rounded-xl border border-white/10 bg-white/5 px-4 py-4 text-sm leading-7 text-white outline-none transition placeholder:text-white/20 focus:border-white/20 focus:bg-white/10"
-              />
+                  <p className="mt-1 text-xs text-white/25">
+                    Add each responsibility
+                    separately.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={
+                    addResponsibility
+                  }
+                  className="inline-flex h-9 items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 text-xs text-white/50 transition hover:bg-white/10 hover:text-white"
+                >
+                  <Plus size={15} />
+
+                  Add
+                </button>
+              </div>
+
+              <div className="space-y-3">
+                {form.responsibilities.map(
+                  (
+                    responsibility,
+                    index,
+                  ) => (
+                    <div
+                      key={`responsibility-${index}`}
+                      className="flex gap-2"
+                    >
+                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-sm text-white/30">
+                        {index + 1}
+                      </div>
+
+                      <textarea
+                        value={
+                          responsibility
+                        }
+                        onChange={(
+                          event,
+                        ) =>
+                          updateResponsibility(
+                            index,
+                            event.target
+                              .value,
+                          )
+                        }
+                        rows={2}
+                        placeholder={`Responsibility ${
+                          index + 1
+                        }`}
+                        className="min-w-0 flex-1 resize-y rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm leading-6 text-white outline-none transition placeholder:text-white/20 focus:border-white/20 focus:bg-white/10"
+                      />
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          removeResponsibility(
+                            index,
+                          )
+                        }
+                        disabled={
+                          form
+                            .responsibilities
+                            .length === 1
+                        }
+                        className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white/30 transition hover:bg-red-500/10 hover:text-red-300 disabled:cursor-not-allowed disabled:opacity-30"
+                        title="Remove responsibility"
+                      >
+                        <Trash2
+                          size={16}
+                        />
+                      </button>
+                    </div>
+                  ),
+                )}
+              </div>
             </div>
+
+            {/* =========================
+                LEARNED ARRAY
+            ========================= */}
+
+            <div>
+              <div className="mb-3 flex items-center justify-between gap-4">
+                <div>
+                  <label className="block text-sm text-white/50">
+                    What I Learned
+                  </label>
+
+                  <p className="mt-1 text-xs text-white/25">
+                    Add each learning point
+                    separately.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={addLearned}
+                  className="inline-flex h-9 items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 text-xs text-white/50 transition hover:bg-white/10 hover:text-white"
+                >
+                  <Plus size={15} />
+
+                  Add
+                </button>
+              </div>
+
+              <div className="space-y-3">
+                {form.learned.map(
+                  (
+                    item,
+                    index,
+                  ) => (
+                    <div
+                      key={`learned-${index}`}
+                      className="flex gap-2"
+                    >
+                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-sm text-white/30">
+                        {index + 1}
+                      </div>
+
+                      <textarea
+                        value={item}
+                        onChange={(
+                          event,
+                        ) =>
+                          updateLearned(
+                            index,
+                            event.target
+                              .value,
+                          )
+                        }
+                        rows={2}
+                        placeholder={`Learning ${
+                          index + 1
+                        }`}
+                        className="min-w-0 flex-1 resize-y rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm leading-6 text-white outline-none transition placeholder:text-white/20 focus:border-white/20 focus:bg-white/10"
+                      />
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          removeLearned(
+                            index,
+                          )
+                        }
+                        disabled={
+                          form.learned
+                            .length === 1
+                        }
+                        className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white/30 transition hover:bg-red-500/10 hover:text-red-300 disabled:cursor-not-allowed disabled:opacity-30"
+                        title="Remove learning"
+                      >
+                        <Trash2
+                          size={16}
+                        />
+                      </button>
+                    </div>
+                  ),
+                )}
+              </div>
+            </div>
+
+            {/* =========================
+                CHECKBOXES
+            ========================= */}
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-white/10 bg-white/5 p-4 transition hover:bg-white/10">
@@ -769,6 +1066,10 @@ export default function ExperienceCreate({
                 </div>
               </label>
             </div>
+
+            {/* =========================
+                IMAGES
+            ========================= */}
 
             <div>
               <div className="mb-3 flex items-center justify-between gap-4">
@@ -870,6 +1171,10 @@ export default function ExperienceCreate({
                 className="hidden"
               />
             </div>
+
+            {/* =========================
+                ACTIONS
+            ========================= */}
 
             <div className="flex flex-col-reverse gap-3 border-t border-white/10 pt-7 sm:flex-row sm:justify-end">
               <button

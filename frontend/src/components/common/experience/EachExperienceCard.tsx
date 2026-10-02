@@ -2,7 +2,10 @@
 
 import Image from "next/image";
 import { useState } from "react";
-import { BriefcaseBusiness, Pencil } from "lucide-react";
+import {
+  BriefcaseBusiness,
+  Pencil,
+} from "lucide-react";
 
 import Card from "@/components/common/util/Card";
 
@@ -15,25 +18,23 @@ export type EmploymentType =
   | "PART_TIME"
   | "CONTRACT"
   | "INTERNSHIP"
-  | "FREELANCE"
-  | "TEMPORARY"
-  | "OTHER";
+  | "FREELANCE";
 
 export interface Experience {
   id: string;
   organization: string;
   role: string;
-  responsibilities: string;
-  learned?: string | null;
+  responsibilities: string[];
+  learned: string[];
   location?: string | null;
   images: string[];
-  employmentType: EmploymentType | string;
+  employmentType: EmploymentType;
   startDate: string;
   endDate?: string | null;
   isCurrent: boolean;
   experienceLetterUrl?: string | null;
   sortOrder: number;
-  isActive?: boolean;
+  isActive: boolean;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -50,6 +51,7 @@ function formatPeriod(
   isCurrent: boolean,
 ) {
   const start = new Date(startDate);
+
   const startYear = start.getFullYear();
 
   if (isCurrent || !endDate) {
@@ -61,30 +63,9 @@ function formatPeriod(
   return `${startYear} — ${end.getFullYear()}`;
 }
 
-function getWordsPreview(
-  text: string | null | undefined,
-  maxWords = 200,
+function getImageUrl(
+  image?: string | null,
 ) {
-  if (!text) {
-    return "";
-  }
-
-  const trimmedText = text.trim();
-
-  if (!trimmedText) {
-    return "";
-  }
-
-  const words = trimmedText.split(/\s+/);
-
-  if (words.length <= maxWords) {
-    return trimmedText;
-  }
-
-  return `${words.slice(0, maxWords).join(" ")}...`;
-}
-
-function getImageUrl(image?: string | null) {
   if (!image) {
     return null;
   }
@@ -115,7 +96,8 @@ export default function EachExperienceCard({
   isAdmin = false,
   reloadList,
 }: EachExperienceCardProps) {
-  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] =
+    useState(false);
 
   const imageUrl = getImageUrl(
     experience.images?.[0],
@@ -129,10 +111,11 @@ export default function EachExperienceCard({
     setIsEditOpen(true);
   };
 
-  const handleReloadList = async () => {
-    setIsEditOpen(false);
-    await reloadList?.();
-  };
+  const handleReloadList =
+    async () => {
+      setIsEditOpen(false);
+      await reloadList?.();
+    };
 
   const handleCancelEdit = () => {
     setIsEditOpen(false);
@@ -148,8 +131,13 @@ export default function EachExperienceCard({
     );
   }
 
+  const hasMoreContent =
+    experience.responsibilities.length > 3 ||
+    experience.learned.length > 1;
+
   return (
-    <Card className="group flex h-full min-h-[560px] flex-col overflow-hidden">
+    <Card className="group flex min-h-[560px] h-full flex-col overflow-hidden">
+      {/* Experience Image */}
       <div className="relative min-h-[280px] w-full flex-1 overflow-hidden bg-white/5">
         {imageUrl ? (
           <Image
@@ -223,17 +211,32 @@ export default function EachExperienceCard({
           )}
         </div>
 
-        <p className="mt-4 line-clamp-5 text-sm leading-7 text-white/45">
-          {experience.responsibilities}
-        </p>
+        <div className="mt-4 space-y-1">
+          {experience.responsibilities
+            .slice(0, 3)
+            .map(
+              (
+                responsibility,
+                index,
+              ) => (
+                <p
+                  key={`${experience.id}-responsibility-${index}`}
+                  className="line-clamp-1 text-sm leading-6 text-white/45"
+                >
+                  • {responsibility}
+                </p>
+              ),
+            )}
+        </div>
 
-        {experience.learned && (
+        {experience.learned.length > 0 && (
           <div className="mt-4">
+            <p className="mb-1 text-xs uppercase tracking-wider text-white/25">
+              Learned
+            </p>
+
             <p className="line-clamp-2 text-sm leading-6 text-white/35">
-              {getWordsPreview(
-                experience.learned,
-                200,
-              )}
+              {experience.learned.join(" • ")}
             </p>
           </div>
         )}

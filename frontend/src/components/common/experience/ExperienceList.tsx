@@ -18,12 +18,62 @@ import { getApi } from "@/api/getapi";
 
 import EachExperienceCard, {
   type Experience,
+  type EmploymentType,
 } from "./EachExperienceCard";
 
 interface ExperienceListProps {
   isAdmin?: boolean;
   isPortfolio?: boolean;
 }
+
+const normalizeStringArray = (
+  value: unknown,
+): string[] => {
+  if (Array.isArray(value)) {
+    return value
+      .map(String)
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+
+    if (!trimmed) {
+      return [];
+    }
+
+    return [trimmed];
+  }
+
+  return [];
+};
+
+const normalizeEmploymentType = (
+  value: unknown,
+): EmploymentType => {
+  const employmentType = String(
+    value ?? "FULL_TIME",
+  ).toUpperCase();
+
+  const validTypes: EmploymentType[] = [
+    "FULL_TIME",
+    "PART_TIME",
+    "CONTRACT",
+    "INTERNSHIP",
+    "FREELANCE",
+  ];
+
+  if (
+    validTypes.includes(
+      employmentType as EmploymentType,
+    )
+  ) {
+    return employmentType as EmploymentType;
+  }
+
+  return "FULL_TIME";
+};
 
 const normalizeExperience = (
   raw: Record<string, unknown>,
@@ -55,17 +105,15 @@ const normalizeExperience = (
         "Unknown Role",
     ),
 
-    responsibilities: String(
-      raw.responsibilities ??
-        raw.description ??
-        "",
-    ),
+    responsibilities:
+      normalizeStringArray(
+        raw.responsibilities ??
+          raw.description,
+      ),
 
-    learned:
-      raw.learned !== null &&
-      raw.learned !== undefined
-        ? String(raw.learned)
-        : null,
+    learned: normalizeStringArray(
+      raw.learned,
+    ),
 
     location:
       raw.location !== null &&
@@ -75,11 +123,11 @@ const normalizeExperience = (
 
     images,
 
-    employmentType: String(
-      raw.employmentType ??
-        raw.employment_type ??
-        "OTHER",
-    ),
+    employmentType:
+      normalizeEmploymentType(
+        raw.employmentType ??
+          raw.employment_type,
+      ),
 
     startDate: String(
       raw.startDate ??

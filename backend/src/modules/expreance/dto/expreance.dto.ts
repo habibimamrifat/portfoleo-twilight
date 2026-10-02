@@ -24,11 +24,33 @@ export class CreateExperienceDto {
   @IsArray()
   @ArrayMinSize(1)
   @IsString({ each: true })
+  @Transform(({ value }) => {
+    if (Array.isArray(value)) {
+      return value;
+    }
+
+    if (typeof value === 'string') {
+      return [value];
+    }
+
+    return value;
+  })
   responsibilities!: string[];
 
   @IsArray()
   @ArrayMinSize(1)
   @IsString({ each: true })
+  @Transform(({ value }) => {
+    if (Array.isArray(value)) {
+      return value;
+    }
+
+    if (typeof value === 'string') {
+      return [value];
+    }
+
+    return value;
+  })
   learned!: string[];
 
   @IsOptional()
@@ -105,12 +127,34 @@ export class UpdateExperienceDto {
   @IsArray()
   @ArrayMinSize(1)
   @IsString({ each: true })
+  @Transform(({ value }) => {
+    if (Array.isArray(value)) {
+      return value;
+    }
+
+    if (typeof value === 'string') {
+      return [value];
+    }
+
+    return value;
+  })
   responsibilities?: string[];
 
   @IsOptional()
   @IsArray()
   @ArrayMinSize(1)
   @IsString({ each: true })
+  @Transform(({ value }) => {
+    if (Array.isArray(value)) {
+      return value;
+    }
+
+    if (typeof value === 'string') {
+      return [value];
+    }
+
+    return value;
+  })
   learned?: string[];
 
   @IsOptional()

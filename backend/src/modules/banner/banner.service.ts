@@ -3,7 +3,9 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+
 import { PrismaService } from '../../prisma/prisma.service';
+
 import {
   CreateBannerQuoteDto,
   UpdateBannerQuoteDto,
@@ -33,6 +35,7 @@ export class BannerQuoteService {
     return this.prisma.bannerQuote.create({
       data: {
         primaryText: bannerQuoteDto.primaryText,
+
         secondaryText: bannerQuoteDto.secondaryText,
       },
     });
@@ -49,9 +52,15 @@ export class BannerQuoteService {
       where: {
         id: existingBannerQuote.id,
       },
+
       data: {
-        primaryText: bannerQuoteDto.primaryText,
-        secondaryText: bannerQuoteDto.secondaryText,
+        ...(bannerQuoteDto.primaryText !== undefined && {
+          primaryText: bannerQuoteDto.primaryText,
+        }),
+
+        ...(bannerQuoteDto.secondaryText !== undefined && {
+          secondaryText: bannerQuoteDto.secondaryText,
+        }),
       },
     });
   }

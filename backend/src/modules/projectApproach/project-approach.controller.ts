@@ -21,6 +21,7 @@ import {
 import { RouteFor, routeTypeObj } from '../../decorators/route.decorator';
 
 import { ResponseMessage } from '../../decorators/response-message.decorator';
+
 import { ProjectApproachService } from './project-approach.service';
 
 @Controller('projects')
@@ -60,14 +61,14 @@ export class ProjectApproachController {
     );
   }
 
-  @Get('approaches/:id')
+  @Get(':projectId/approaches/:id')
   @RouteFor(routeTypeObj.ADMIN)
   @ResponseMessage('Project approach retrieved successfully')
-  findOne(@Param('id') id: string) {
+  findOne(@Param('projectId') projectId: string, @Param('id') id: string) {
     return this.projectApproachService.findOne(id);
   }
 
-  @Patch('approaches/:id')
+  @Patch(':projectId/approaches/:id')
   @RouteFor(routeTypeObj.ADMIN)
   @ResponseMessage('Project approach updated successfully')
   @UseInterceptors(
@@ -76,6 +77,7 @@ export class ProjectApproachController {
     }),
   )
   update(
+    @Param('projectId') projectId: string,
     @Param('id') id: string,
 
     @Body()
@@ -91,10 +93,10 @@ export class ProjectApproachController {
     );
   }
 
-  @Delete('approaches/:id')
+  @Delete(':projectId/approaches/:id')
   @RouteFor(routeTypeObj.ADMIN)
   @ResponseMessage('Project approach deleted successfully')
-  remove(@Param('id') id: string) {
+  remove(@Param('projectId') projectId: string, @Param('id') id: string) {
     return this.projectApproachService.remove(id);
   }
 }

@@ -23,6 +23,16 @@ interface BannerQuote {
   secondaryText: string[];
 }
 
+const PRIMARY_MAX_CHARACTERS = 80;
+const SECONDARY_MAX_CHARACTERS = 160;
+
+const limitCharacters = (
+  text: string,
+  maxCharacters: number,
+) => {
+  return text.slice(0, maxCharacters);
+};
+
 export default function Banner() {
   const [banner, setBanner] =
     useState<BannerQuote | null>(null);
@@ -108,8 +118,10 @@ export default function Banner() {
     index: number,
     event: ChangeEvent<HTMLInputElement>,
   ) => {
-    const value =
-      event.target.value;
+    const value = limitCharacters(
+      event.target.value,
+      PRIMARY_MAX_CHARACTERS,
+    );
 
     setPrimaryText(
       (previous) =>
@@ -126,8 +138,10 @@ export default function Banner() {
     index: number,
     event: ChangeEvent<HTMLInputElement>,
   ) => {
-    const value =
-      event.target.value;
+    const value = limitCharacters(
+      event.target.value,
+      SECONDARY_MAX_CHARACTERS,
+    );
 
     setSecondaryText(
       (previous) =>
@@ -241,9 +255,7 @@ export default function Banner() {
 
       const response =
         await callApi(
-          banner
-            ? "/banner-quote"
-            : "/banner-quote",
+          "/banner-quote",
           banner
             ? "PATCH"
             : "POST",
@@ -368,6 +380,7 @@ export default function Banner() {
         onSubmit={handleSubmit}
         className="space-y-7"
       >
+        {/* Primary Text */}
         <div>
           <div className="mb-3 flex items-center justify-between gap-3">
             <div>
@@ -382,9 +395,7 @@ export default function Banner() {
 
             <button
               type="button"
-              onClick={
-                addPrimaryText
-              }
+              onClick={addPrimaryText}
               className="
                 inline-flex
                 h-9
@@ -402,7 +413,6 @@ export default function Banner() {
               "
             >
               <Plus size={15} />
-
               Add
             </button>
           </div>
@@ -414,31 +424,53 @@ export default function Banner() {
                   key={`primary-${index}`}
                   className="flex gap-2"
                 >
-                  <input
-                    type="text"
-                    value={text}
-                    onChange={(event) =>
-                      handlePrimaryChange(
-                        index,
-                        event,
-                      )
-                    }
-                    placeholder="Primary banner text"
-                    className="
-                      min-w-0
-                      flex-1
-                      rounded-2xl
-                      border border-white/15
-                      bg-white/5
-                      px-4 py-3
-                      text-sm
-                      text-white
-                      outline-none
-                      placeholder:text-white/25
-                      focus:border-white/30
-                      focus:bg-white/10
-                    "
-                  />
+                  <div className="min-w-0 flex-1">
+                    <input
+                      type="text"
+                      value={text}
+                      maxLength={
+                        PRIMARY_MAX_CHARACTERS
+                      }
+                      onChange={(event) =>
+                        handlePrimaryChange(
+                          index,
+                          event,
+                        )
+                      }
+                      placeholder="Primary banner text"
+                      className="
+                        w-full
+                        rounded-2xl
+                        border border-white/15
+                        bg-white/5
+                        px-4 py-3
+                        text-sm
+                        text-white
+                        outline-none
+                        placeholder:text-white/25
+                        focus:border-white/30
+                        focus:bg-white/10
+                      "
+                    />
+
+                    <div className="mt-1 flex justify-end">
+                      <span
+                        className={`
+                          text-[11px]
+                          ${
+                            text.length >=
+                            PRIMARY_MAX_CHARACTERS
+                              ? "text-red-300"
+                              : "text-white/30"
+                          }
+                        `}
+                      >
+                        {text.length} /{" "}
+                        {PRIMARY_MAX_CHARACTERS}{" "}
+                        characters
+                      </span>
+                    </div>
+                  </div>
 
                   <button
                     type="button"
@@ -472,6 +504,7 @@ export default function Banner() {
           </div>
         </div>
 
+        {/* Secondary Text */}
         <div>
           <div className="mb-3 flex items-center justify-between gap-3">
             <div>
@@ -486,9 +519,7 @@ export default function Banner() {
 
             <button
               type="button"
-              onClick={
-                addSecondaryText
-              }
+              onClick={addSecondaryText}
               className="
                 inline-flex
                 h-9
@@ -506,7 +537,6 @@ export default function Banner() {
               "
             >
               <Plus size={15} />
-
               Add
             </button>
           </div>
@@ -518,31 +548,53 @@ export default function Banner() {
                   key={`secondary-${index}`}
                   className="flex gap-2"
                 >
-                  <input
-                    type="text"
-                    value={text}
-                    onChange={(event) =>
-                      handleSecondaryChange(
-                        index,
-                        event,
-                      )
-                    }
-                    placeholder="Secondary banner text"
-                    className="
-                      min-w-0
-                      flex-1
-                      rounded-2xl
-                      border border-white/15
-                      bg-white/5
-                      px-4 py-3
-                      text-sm
-                      text-white
-                      outline-none
-                      placeholder:text-white/25
-                      focus:border-white/30
-                      focus:bg-white/10
-                    "
-                  />
+                  <div className="min-w-0 flex-1">
+                    <input
+                      type="text"
+                      value={text}
+                      maxLength={
+                        SECONDARY_MAX_CHARACTERS
+                      }
+                      onChange={(event) =>
+                        handleSecondaryChange(
+                          index,
+                          event,
+                        )
+                      }
+                      placeholder="Secondary banner text"
+                      className="
+                        w-full
+                        rounded-2xl
+                        border border-white/15
+                        bg-white/5
+                        px-4 py-3
+                        text-sm
+                        text-white
+                        outline-none
+                        placeholder:text-white/25
+                        focus:border-white/30
+                        focus:bg-white/10
+                      "
+                    />
+
+                    <div className="mt-1 flex justify-end">
+                      <span
+                        className={`
+                          text-[11px]
+                          ${
+                            text.length >=
+                            SECONDARY_MAX_CHARACTERS
+                              ? "text-red-300"
+                              : "text-white/30"
+                          }
+                        `}
+                      >
+                        {text.length} /{" "}
+                        {SECONDARY_MAX_CHARACTERS}{" "}
+                        characters
+                      </span>
+                    </div>
+                  </div>
 
                   <button
                     type="button"

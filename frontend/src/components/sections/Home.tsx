@@ -14,6 +14,10 @@ import {
 import { useEffect, useState } from "react";
 import { useApp } from "../context/AppContext";
 import Appear from "../common/animation/Appear";
+import HeadingSlider from "../common/Profile/Banner/HeadingSlider";
+import SecondaryTextSlider from "../common/Profile/Banner/SecondaryTextSlider";
+
+
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -29,6 +33,12 @@ type UserData = {
   linkedinUrl?: string | null;
   youtubeUrl?: string | null;
 };
+
+interface BannerQuote {
+  id: string;
+  primaryText: string[];
+  secondaryText: string[];
+}
 
 const defaultUser: UserData = {
   name: "Habib Rifat",
@@ -60,6 +70,9 @@ export default function Home() {
   const [user, setUser] =
     useState<UserData>(defaultUser);
 
+  const [banner, setBanner] =
+    useState<BannerQuote | null>(null);
+
   useEffect(() => {
     async function getUser() {
       try {
@@ -83,6 +96,30 @@ export default function Home() {
     }
 
     getUser();
+  }, []);
+
+  useEffect(() => {
+    async function getBanner() {
+      try {
+        const response = await fetch(
+          `${BASE_URL}/banner-quote`,
+        );
+
+        if (!response.ok) {
+          return;
+        }
+
+        const result = await response.json();
+
+        setBanner(
+          result.data ?? result,
+        );
+      } catch {
+        setBanner(null);
+      }
+    }
+
+    getBanner();
   }, []);
 
   const profileImage: string =
@@ -144,21 +181,30 @@ export default function Home() {
                 Full-Stack Developer
               </p>
 
-              {/* Heading */}
-              <h1 className="text-3xl font-bold leading-tight tracking-tight sm:text-4xl">
-                I build modern
-                <span className="text-blue-400">
-                  {" "}
-                  web applications
-                </span>
-                <br />
-                that are built to grow.
-              </h1>
+              {/* Heading Slider */}
+              {banner && (
+                <HeadingSlider
+                  texts={banner.primaryText}
+                />
+              )}
 
-              {/* Description */}
-              <p className="mt-5 max-w-xl text-sm leading-6 text-white/60 sm:text-base">
-                {description}
-              </p>
+              {/* Secondary Text Slider */}
+              {banner && (
+                <div className="mt-5 max-w-xl">
+                  <SecondaryTextSlider
+                    texts={
+                      banner.secondaryText
+                    }
+                  />
+                </div>
+              )}
+
+              {/* Fallback Description */}
+              {!banner && (
+                <p className="mt-5 max-w-xl text-sm leading-6 text-white/60 sm:text-base">
+                  {description}
+                </p>
+              )}
 
               {/* Buttons */}
               <div className="mt-7 flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
@@ -373,21 +419,30 @@ export default function Home() {
                 Full-Stack Developer
               </p>
 
-              {/* Heading */}
-              <h1 className="text-4xl font-bold leading-tight tracking-tight sm:text-5xl lg:text-6xl">
-                I build modern
-                <span className="text-blue-400">
-                  {" "}
-                  web applications
-                </span>
-                <br />
-                that are built to grow.
-              </h1>
+              {/* Heading Slider */}
+              {banner && (
+                <HeadingSlider
+                  texts={banner.primaryText}
+                />
+              )}
 
-              {/* Description */}
-              <p className="mt-6 max-w-2xl text-base leading-7 text-white/60">
-                {description}
-              </p>
+              {/* Secondary Text Slider */}
+              {banner && (
+                <div className="mt-6 max-w-2xl">
+                  <SecondaryTextSlider
+                    texts={
+                      banner.secondaryText
+                    }
+                  />
+                </div>
+              )}
+
+              {/* Fallback Description */}
+              {!banner && (
+                <p className="mt-6 max-w-2xl text-base leading-7 text-white/60">
+                  {description}
+                </p>
+              )}
 
               {/* Buttons */}
               <div className="mt-8 flex flex-wrap gap-3">

@@ -5,6 +5,7 @@ import {
   CalendarDays,
   ExternalLink,
   FileText,
+  Lightbulb,
   Loader2,
 } from "lucide-react";
 import { FaGithub } from "react-icons/fa";
@@ -14,6 +15,8 @@ import { getApi } from "@/api/getapi";
 import ProjectCommentList from "./comments/ProjectCommentList";
 import ImageSwiper from "../slider/ThumbsGalary";
 import Appear from "@/components/common/animation/Appear";
+import ProjectApproachList from "./projectApproch/ProjectApproachList";
+
 
 type ProjectStatus =
   | "IN_PROGRESS"
@@ -29,7 +32,6 @@ interface Project {
   githubLink?: string | null;
   status: ProjectStatus;
   platform: string;
-  approachTaken?: string | null;
   featured: boolean;
   sortOrder: number;
   isActive?: boolean;
@@ -380,26 +382,27 @@ export default function ViewProject({
       </Appear>
 
       {/* =====================================================
-          APPROACH
+          PROJECT APPROACH
           ===================================================== */}
 
-      {project.approachTaken && (
-        <Appear
-          direction="bottom"
-          delay={0.15}
-          duration={0.6}
-        >
-          <Card className="p-6 md:p-8">
-            <h2 className="text-xl font-semibold text-white">
-              Approach Taken
-            </h2>
+          <h3 className="text-2xl text-white mt-20 font-bold">
+            <div className="flex items-center gap-2">
+              <Lightbulb size={24} />
+              Project Approach Taken
+            </div>
+          </h3>
 
-            <p className="mt-4 whitespace-pre-wrap break-words text-[15px] leading-8 text-white/70 md:text-base">
-              {project.approachTaken}
-            </p>
-          </Card>
-        </Appear>
-      )}
+      <Appear
+        direction="bottom"
+        delay={0.15}
+        duration={0.6}
+      >
+        <ProjectApproachList
+          projectId={project.id}
+          isAdmin={isAdmin}
+          projectApproachListReload={0}
+        />
+      </Appear>
 
       {/* =====================================================
           COMMENTS
