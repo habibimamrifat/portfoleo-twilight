@@ -42,10 +42,6 @@ export class AboutMeService {
       },
     });
 
-    if (!aboutMe) {
-      throw new NotFoundException('About me not found');
-    }
-
     return aboutMe;
   }
 
@@ -101,7 +97,7 @@ export class AboutMeService {
     });
 
     if (!aboutMe) {
-      throw new NotFoundException('About me not found');
+      return [];
     }
 
     return this.prisma.workSector.findMany({

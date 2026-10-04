@@ -23,9 +23,9 @@ import { RouteGuard } from './guard/route.guard';
 import { AuthGuard } from './guard/auth.guard';
 import { ContactModule } from './modules/contact/contact.module';
 import { ProjectCommentModule } from './modules/project-comment/project-comment.module';
-import { BannerQuoteModule } from './modules/banner/banner.module';
 import { ProjectApproachModule } from './modules/projectApproach/project-approach.module';
 import { AboutMeModule } from './modules/aboutMe/about-me.module';
+import { BannerQuoteModule } from './modules/banner/banner.module';
 
 @Module({
   imports: [
@@ -38,7 +38,6 @@ import { AboutMeModule } from './modules/aboutMe/about-me.module';
     AppConfigModule,
     JwtCustomModule,
     BcryptModule,
-    BannerQuoteModule,
     ProjectApproachModule,
     ServicesModule,
     ProjectsModule,
@@ -50,6 +49,7 @@ import { AboutMeModule } from './modules/aboutMe/about-me.module';
     CloudinaryModule,
     ProjectCommentModule,
     AboutMeModule,
+    BannerQuoteModule,
   ],
   controllers: [AppController],
   providers: [
