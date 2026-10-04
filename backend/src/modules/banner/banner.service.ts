@@ -18,6 +18,10 @@ export class BannerQuoteService {
   async findOne() {
     const bannerQuote = await this.prisma.bannerQuote.findFirst();
 
+    if (!bannerQuote) {
+      throw new NotFoundException('Banner quote not found');
+    }
+
     return bannerQuote;
   }
 
@@ -31,6 +35,7 @@ export class BannerQuoteService {
     return this.prisma.bannerQuote.create({
       data: {
         primaryText: bannerQuoteDto.primaryText,
+
         secondaryText: bannerQuoteDto.secondaryText,
       },
     });
