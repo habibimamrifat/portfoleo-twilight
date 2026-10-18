@@ -15,9 +15,33 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Habib | Full-Stack Developer",
+  metadataBase: new URL("https://habibrifat.com"),
+
+  title: {
+    default: "Habib Rifat | Full-Stack Developer",
+    template: "%s | Habib Rifat",
+  },
+
   description:
-    "Full-Stack Developer building modern web applications.",
+    "Habib Rifat is a full-stack developer focused on backend engineering, reliable APIs, scalable web applications, and modern web experiences.",
+
+  applicationName: "Habib Rifat Portfolio",
+
+  openGraph: {
+    type: "website",
+    title: "Habib Rifat | Full-Stack Developer",
+    description:
+      "Explore Habib Rifat's projects, development experience, backend engineering, and full-stack web development services.",
+    siteName: "Habib Rifat Portfolio",
+    locale: "en_US",
+  },
+
+  twitter: {
+    card: "summary_large_image",
+    title: "Habib Rifat | Full-Stack Developer",
+    description:
+      "Explore projects, experience, and full-stack web development services by Habib Rifat.",
+  },
 };
 
 export default function RootLayout({

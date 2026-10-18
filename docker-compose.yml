@@ -1,18 +1,24 @@
 services:
   frontend:
+    build: ./frontend
     image: portfolio-frontend
     ports:
       - "3000:3000"
+    env_file:
+      - ./frontend/.env
     environment:
-      NEXT_PUBLIC_API_URL: http://localhost:3001
+      NEXT_PUBLIC_API_URL: https://api.habibrifat.com
 
   backend:
+    build: ./backend
     image: portfolio-backend
     ports:
       - "3001:3000"
+    env_file:
+      - ./backend/.env
     environment:
       DATABASE_URL: "postgresql://user:postgres@postgres:5432/portfolio_db"
-      FRONTEND_URL: "http://localhost:3000"
+      FRONTEND_URL: "http://192.168.0.102,http://192.168.0.102:3000,http://localhost:3000,https://habibrifat.com,https://www.habibrifat.com" 
     depends_on:
       postgres:
         condition: service_healthy
@@ -24,14 +30,12 @@ services:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: portfolio_db
-    ports:
-      - "3002:5432"
     volumes:
       - portfolio_data:/var/lib/postgresql
     healthcheck:
       test:
-            - CMD-SHELL
-            - pg_isready -U user -d portfolio_db
+        - CMD-SHELL
+        - pg_isready -U user -d portfolio_db
       interval: 5s
       timeout: 5s
       retries: 5

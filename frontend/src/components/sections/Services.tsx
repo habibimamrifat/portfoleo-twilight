@@ -7,6 +7,8 @@ import {
   Database,
   Wrench,
 } from "lucide-react";
+import * as LucideIcons from "lucide-react";
+import * as SimpleIcons from "react-icons/si";
 import { useEffect, useState } from "react";
 import Appear from "../common/animation/Appear";
 
@@ -25,6 +27,39 @@ const iconMap = {
   ServerCog,
   Database,
   Wrench,
+};
+
+// DYNAMIC ICON CHANGE: Resolves icons selected in the dashboard.
+const getDynamicIcon = (value?: string | null) => {
+  if (!value) return Wrench;
+
+  const [prefix, ...parts] = value.split(":");
+  const name = parts.join(":");
+
+  if (prefix === "lucide") {
+    const Icon = (
+      LucideIcons as unknown as Record<string, React.ElementType>
+    )[name];
+
+    if (Icon) return Icon;
+  }
+
+  if (prefix === "si") {
+    const Icon = (
+      SimpleIcons as unknown as Record<string, React.ElementType>
+    )[name];
+
+    if (Icon) return Icon;
+  }
+
+  // Supports existing icon names such as "Globe" and "Database".
+  const LegacyIcon = (
+    iconMap as Record<string, React.ElementType>
+  )[value];
+
+  if (LegacyIcon) return LegacyIcon;
+
+  return Wrench;
 };
 
 const defaultServices: Service[] = [
@@ -69,9 +104,7 @@ export default function Services() {
   useEffect(() => {
     async function getServices() {
       try {
-        const response = await fetch(
-          `${BASE_URL}/services`,
-        );
+        const response = await fetch(`${BASE_URL}/services`);
 
         if (!response.ok) {
           return;
@@ -115,10 +148,8 @@ export default function Services() {
         {/* Services */}
         <div className="grid gap-4 sm:grid-cols-2">
           {services.map((service, index) => {
-            const Icon =
-              iconMap[
-                service.icon as keyof typeof iconMap
-              ] || Wrench;
+            // DYNAMIC ICON CHANGE: Uses the dashboard-selected icon.
+            const Icon = getDynamicIcon(service.icon);
 
             return (
               <Appear
