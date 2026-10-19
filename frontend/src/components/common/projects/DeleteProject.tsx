@@ -16,6 +16,9 @@ export default function DeleteProject({
   const [deleting, setDeleting] = useState(false);
 
   const handleDelete = async () => {
+
+    
+
     const confirmed = window.confirm(
       "Are you sure you want to delete this project? This action cannot be undone.",
     );
@@ -26,11 +29,14 @@ export default function DeleteProject({
 
     try {
       setDeleting(true);
+      console.log("Delete project:========>>>>>>>>", projectId);
 
-      await callApi(
-        `/projects/${projectId}`,
-        "DELETE",
-      );
+await callApi(
+  `/projects/${projectId}`,
+  "DELETE",
+  undefined,
+  true,
+);
 
       refreshParent();
     } catch (error) {

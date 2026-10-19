@@ -34,7 +34,6 @@ export interface ProjectFormData {
   githubLink: string;
   status: ProjectStatus;
   platform: ProjectPlatform;
-  approachTaken: string;
   featured: boolean;
   sortOrder: string;
   isActive: boolean;
@@ -54,7 +53,6 @@ const emptyForm: ProjectFormData = {
   githubLink: "",
   status: "IN_PROGRESS",
   platform: "WEBSITE",
-  approachTaken: "",
   featured: false,
   sortOrder: "0",
   isActive: true,
@@ -101,8 +99,7 @@ export default function EditProject({
           true,
         );
 
-        const result =
-          await response.json();
+        const result = await response.json();
 
         if (!response.ok) {
           throw new Error(
@@ -129,27 +126,18 @@ export default function EditProject({
           githubLink:
             project.githubLink ?? "",
           status:
-            project.status ===
-              "DEVELOPED" ||
-            project.status ===
-              "DISCONTINUED"
+            project.status === "DEVELOPED" ||
+            project.status === "DISCONTINUED"
               ? project.status
               : "IN_PROGRESS",
           platform:
-            project.platform ===
-              "MOBILE" ||
-            project.platform ===
-              "BACKEND" ||
-            project.platform ===
-              "DESKTOP" ||
-            project.platform ===
-              "API" ||
-            project.platform ===
-              "OTHER"
+            project.platform === "MOBILE" ||
+            project.platform === "BACKEND" ||
+            project.platform === "DESKTOP" ||
+            project.platform === "API" ||
+            project.platform === "OTHER"
               ? project.platform
               : "WEBSITE",
-          approachTaken:
-            project.approachTaken ?? "",
           featured:
             project.featured ?? false,
           sortOrder: String(
@@ -157,8 +145,7 @@ export default function EditProject({
           ),
           isActive:
             project.isActive ?? true,
-          images:
-            project.images ?? [],
+          images: project.images ?? [],
         });
 
         setImagePreviews(
@@ -192,13 +179,11 @@ export default function EditProject({
 
   useEffect(() => {
     return () => {
-      imagePreviews.forEach(
-        (preview) => {
-          if (preview.startsWith("blob:")) {
-            URL.revokeObjectURL(preview);
-          }
-        },
-      );
+      imagePreviews.forEach((preview) => {
+        if (preview.startsWith("blob:")) {
+          URL.revokeObjectURL(preview);
+        }
+      });
     };
   }, [imagePreviews]);
 
@@ -217,28 +202,21 @@ export default function EditProject({
       return;
     }
 
-    const invalidFile = files.find(
-      (file) => {
-        if (!file.type.startsWith("image/")) {
-          return true;
-        }
+    const invalidFile = files.find((file) => {
+      if (!file.type.startsWith("image/")) {
+        return true;
+      }
 
-        if (
-          file.size >
-          5 * 1024 * 1024
-        ) {
-          return true;
-        }
+      if (file.size > 5 * 1024 * 1024) {
+        return true;
+      }
 
-        return false;
-      },
-    );
+      return false;
+    });
 
     if (invalidFile) {
       if (
-        !invalidFile.type.startsWith(
-          "image/",
-        )
+        !invalidFile.type.startsWith("image/")
       ) {
         setError(
           "Please select image files only.",
@@ -256,24 +234,19 @@ export default function EditProject({
 
     setError(null);
 
-    setSelectedImages(
-      (previous) => [
-        ...previous,
-        ...files,
-      ],
+    setSelectedImages((previous) => [
+      ...previous,
+      ...files,
+    ]);
+
+    const previews = files.map((file) =>
+      URL.createObjectURL(file),
     );
 
-    const previews = files.map(
-      (file) =>
-        URL.createObjectURL(file),
-    );
-
-    setImagePreviews(
-      (previous) => [
-        ...previous,
-        ...previews,
-      ],
-    );
+    setImagePreviews((previous) => [
+      ...previous,
+      ...previews,
+    ]);
 
     event.target.value = "";
   };
@@ -298,20 +271,18 @@ export default function EditProject({
       URL.revokeObjectURL(preview);
     }
 
-    setSelectedImages(
-      (previous) =>
-        previous.filter(
-          (_, imageIndex) =>
-            imageIndex !== index,
-        ),
+    setSelectedImages((previous) =>
+      previous.filter(
+        (_, imageIndex) =>
+          imageIndex !== index,
+      ),
     );
 
-    setImagePreviews(
-      (previous) =>
-        previous.filter(
-          (_, imageIndex) =>
-            imageIndex !== previewIndex,
-        ),
+    setImagePreviews((previous) =>
+      previous.filter(
+        (_, imageIndex) =>
+          imageIndex !== previewIndex,
+      ),
     );
   };
 
@@ -342,8 +313,7 @@ export default function EditProject({
       setSaving(true);
       setError(null);
 
-      const formData =
-        new FormData();
+      const formData = new FormData();
 
       formData.append(
         "name",
@@ -376,11 +346,6 @@ export default function EditProject({
       );
 
       formData.append(
-        "approachTaken",
-        form.approachTaken.trim(),
-      );
-
-      formData.append(
         "featured",
         String(form.featured),
       );
@@ -395,25 +360,21 @@ export default function EditProject({
         String(form.isActive),
       );
 
-      selectedImages.forEach(
-        (image) => {
-          formData.append(
-            "images",
-            image,
-          );
-        },
+      selectedImages.forEach((image) => {
+        formData.append(
+          "images",
+          image,
+        );
+      });
+
+      const response = await callApi(
+        `/projects/${projectId}`,
+        "PATCH",
+        formData,
+        true,
       );
 
-      const response =
-        await callApi(
-          `/projects/${projectId}`,
-          "PATCH",
-          formData,
-          true,
-        );
-
-      const result =
-        await response.json();
+      const result = await response.json();
 
       if (!response.ok) {
         throw new Error(
@@ -518,8 +479,7 @@ export default function EditProject({
             onChange={(event) =>
               setForm((previous) => ({
                 ...previous,
-                name:
-                  event.target.value,
+                name: event.target.value,
               }))
             }
             placeholder="Enter project name"
@@ -540,8 +500,7 @@ export default function EditProject({
             onChange={(event) =>
               setForm((previous) => ({
                 ...previous,
-                description:
-                  event.target.value,
+                description: event.target.value,
               }))
             }
             rows={5}
@@ -567,8 +526,7 @@ export default function EditProject({
               onChange={(event) =>
                 setForm((previous) => ({
                   ...previous,
-                  liveLink:
-                    event.target.value,
+                  liveLink: event.target.value,
                 }))
               }
               placeholder="https://example.com"
@@ -590,8 +548,7 @@ export default function EditProject({
               onChange={(event) =>
                 setForm((previous) => ({
                   ...previous,
-                  githubLink:
-                    event.target.value,
+                  githubLink: event.target.value,
                 }))
               }
               placeholder="https://github.com/..."
@@ -617,8 +574,7 @@ export default function EditProject({
                 setForm((previous) => ({
                   ...previous,
                   status:
-                    event.target
-                      .value as ProjectStatus,
+                    event.target.value as ProjectStatus,
                 }))
               }
               disabled={saving}
@@ -660,8 +616,7 @@ export default function EditProject({
                 setForm((previous) => ({
                   ...previous,
                   platform:
-                    event.target
-                      .value as ProjectPlatform,
+                    event.target.value as ProjectPlatform,
                 }))
               }
               disabled={saving}
@@ -712,29 +667,6 @@ export default function EditProject({
           </div>
         </div>
 
-        {/* APPROACH */}
-
-        <div>
-          <label className="mb-2 block text-sm text-white/60">
-            Approach Taken
-          </label>
-
-          <textarea
-            value={form.approachTaken}
-            onChange={(event) =>
-              setForm((previous) => ({
-                ...previous,
-                approachTaken:
-                  event.target.value,
-              }))
-            }
-            rows={6}
-            placeholder="Describe the technical approach, architecture, important decisions, etc..."
-            disabled={saving}
-            className="w-full resize-y rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm leading-6 text-white outline-none placeholder:text-white/25 focus:border-white/25"
-          />
-        </div>
-
         {/* SORT ORDER */}
 
         <div>
@@ -749,8 +681,7 @@ export default function EditProject({
             onChange={(event) =>
               setForm((previous) => ({
                 ...previous,
-                sortOrder:
-                  event.target.value,
+                sortOrder: event.target.value,
               }))
             }
             disabled={saving}
@@ -800,12 +731,10 @@ export default function EditProject({
                 {imagePreviews.map(
                   (preview, index) => {
                     const isNewImage =
-                      index >=
-                      form.images.length;
+                      index >= form.images.length;
 
                     const newImageIndex =
-                      index -
-                      form.images.length;
+                      index - form.images.length;
 
                     return (
                       <div
@@ -868,8 +797,7 @@ export default function EditProject({
               onChange={(event) =>
                 setForm((previous) => ({
                   ...previous,
-                  featured:
-                    event.target.checked,
+                  featured: event.target.checked,
                 }))
               }
               disabled={saving}
@@ -896,8 +824,7 @@ export default function EditProject({
               onChange={(event) =>
                 setForm((previous) => ({
                   ...previous,
-                  isActive:
-                    event.target.checked,
+                  isActive: event.target.checked,
                 }))
               }
               disabled={saving}
