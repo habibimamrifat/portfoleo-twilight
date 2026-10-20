@@ -3,8 +3,6 @@
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 
-
-
 import { callApi } from "@/api/callApi";
 import { setAuthToken, setRenewToken } from "@/api/token";
 
@@ -36,7 +34,7 @@ export default function LoginPage() {
       const result = await response.json();
 
       if (!response.ok) {
-        setError(result.message || "Login failed");
+        setError(result.message || "Invalid email or password.");
         return;
       }
 
@@ -45,56 +43,67 @@ export default function LoginPage() {
 
       router.push("/dashboard/profile");
     } catch {
-      setError("Something went wrong. Please try again.");
+      setError("Unable to log in. Please try again.");
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center px-4">
+    <main className="flex min-h-screen items-center justify-center px-4">
       <div className="w-full max-w-md rounded-2xl border border-white/20 bg-white/0 p-8 backdrop-blur-xs">
         <h1 className="mb-2 text-3xl font-semibold text-white">
           Welcome back
         </h1>
 
         <p className="mb-8 text-white/60">
-          Login to your portfolio dashboard.
+          Log in to your portfolio dashboard.
         </p>
 
-        <form onSubmit={handleLogin} className="space-y-5">
+        <form onSubmit={handleLogin} className="space-y-5"
+        autoComplete="off">
           <div>
-            <label className="mb-2 block text-sm text-white/70">
+            <label
+              htmlFor="email"
+              className="mb-2 block text-sm text-white/70"
+            >
               Email
             </label>
 
             <input
+              id="email"
               type="email"
+              autoComplete="username"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              placeholder="admin@example.com"
+              placeholder="Enter your email"
               required
               className="w-full rounded-xl border border-white/20 bg-white/5 px-4 py-3 text-white outline-none placeholder:text-white/30 focus:border-white/40"
             />
           </div>
 
           <div>
-            <label className="mb-2 block text-sm text-white/70">
+            <label
+              htmlFor="password"
+              className="mb-2 block text-sm text-white/70"
+            >
               Password
             </label>
 
             <input
+              id="password"
               type="password"
-              // value={password}
+              autoComplete="current-password"
+              value={password}
               onChange={(event) => setPassword(event.target.value)}
-              placeholder="••••••••"
+              placeholder="Enter your password"
               required
               className="w-full rounded-xl border border-white/20 bg-white/5 px-4 py-3 text-white outline-none placeholder:text-white/30 focus:border-white/40"
             />
           </div>
 
           {error && (
-            <p className="text-sm text-red-400">
+            <p role="alert" className="text-sm text-red-400">
               {error}
             </p>
           )}
