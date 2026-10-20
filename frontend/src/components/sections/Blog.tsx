@@ -19,7 +19,7 @@ export default function Blog() {
             </p>
 
             <h2 className="mt-2 text-3xl font-bold">
-              Things Im learning.
+              Fresh Out of My Neuron
             </h2>
           </div>
 

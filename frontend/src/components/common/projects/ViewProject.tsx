@@ -280,12 +280,14 @@ export default function ViewProject({
         <Card className="overflow-hidden">
           {/* PROJECT IMAGES */}
 
-          {images.length > 0 && (
-            <ImageSwiper
-              images={images}
-              alt={project.name}
-            />
-          )}
+{images.length > 0 && (
+  <div className="w-full">
+    <ImageSwiper
+      images={images}
+      alt={project.name}
+    />
+  </div>
+)}
 
           {/* PROJECT HEADER */}
 

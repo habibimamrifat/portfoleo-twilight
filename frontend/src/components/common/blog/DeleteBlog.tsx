@@ -27,7 +27,7 @@ export default function BlogDeleteButton({
     try {
       setDeleting(true);
 
-      await callApi(`/blog-posts/${blogId}`, "DELETE");
+      await callApi(`/blog-posts/${blogId}`, "DELETE", undefined, true);
 
       refreshParent();
     } catch (error) {

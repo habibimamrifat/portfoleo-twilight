@@ -82,7 +82,7 @@ export default function EditBlog({
         setError(null);
 
         const response = await getApi(
-          `/blog-posts/admin/${blogId}`,
+          `/blog-posts/${blogId}`,
           true,
         );
 

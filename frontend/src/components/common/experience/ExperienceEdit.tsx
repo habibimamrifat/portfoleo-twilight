@@ -1,3 +1,4 @@
+
 "use client";
 
 import Image from "next/image";
@@ -143,6 +144,31 @@ function getImageUrl(image?: string | null) {
   return `/${trimmed}`;
 }
 
+// FIX: Normalize API values into strings before using string methods.
+function normalizeText(value: unknown): string {
+  if (typeof value === "string") {
+    return value;
+  }
+
+  if (Array.isArray(value)) {
+    return value
+      .map((item) =>
+        typeof item === "string"
+          ? item
+          : item == null
+            ? ""
+            : String(item),
+      )
+      .join("\n");
+  }
+
+  if (value == null) {
+    return "";
+  }
+
+  return String(value);
+}
+
 function getResponseData(result: unknown): Experience | null {
   if (
     !result ||
@@ -257,9 +283,9 @@ export default function ExperienceEdit({
           role:
             data.role ?? "",
           responsibilities:
-            data.responsibilities ?? "",
+            normalizeText(data.responsibilities),
           learned:
-            data.learned ?? "",
+            normalizeText(data.learned),
           location:
             data.location ?? "",
           employmentType:
@@ -428,13 +454,15 @@ export default function ExperienceEdit({
 
       formData.append(
         "responsibilities",
-        form.responsibilities.trim(),
+        normalizeText(form.responsibilities).trim(),
       );
 
-      if (form.learned.trim()) {
+      const learned = normalizeText(form.learned).trim();
+
+      if (learned) {
         formData.append(
           "learned",
-          form.learned.trim(),
+          learned,
         );
       }
 
@@ -857,7 +885,7 @@ export default function ExperienceEdit({
                     onChange={
                       handleChange
                     }
-                    className="h-12 w-full rounded-xl border border-white/10 bg-white/5 px-4 text-sm text-white outline-none transition placeholder:text-white/20 focus:border-white/20 focus:bg-white/10"
+                    className="h-12 w-full rounded-xl border border-white/10 bg-white/5 px-4 text-sm text-white outline-none transition placeholder:text-white/20 focus:border-white/20"
                     placeholder="https://..."
                   />
                 </div>
@@ -877,7 +905,7 @@ export default function ExperienceEdit({
                     onChange={
                       handleChange
                     }
-                    className="h-12 w-full rounded-xl border border-white/10 bg-white/5 px-4 text-sm text-white outline-none transition placeholder:text-white/20 focus:border-white/20 focus:bg-white/10"
+                    className="h-12 w-full rounded-xl border border-white/10 bg-white/5 px-4 text-sm text-white outline-none transition placeholder:text-white/20 focus:border-white/20"
                   />
                 </div>
               </div>

@@ -39,11 +39,11 @@ export default function ImageSwiper({
               : null,
         }}
         modules={[FreeMode, Thumbs]}
-        className="mySwiper2"
+        className="mySwiper2 w-full"
       >
         {images.map((image, index) => (
           <SwiperSlide key={`${image}-${index}`}>
-            <div className="relative flex h-[280px] w-full items-center justify-center overflow-hidden rounded-xl bg-white/5 sm:h-[340px] lg:h-[400px]">
+            <div className="relative flex min-h-[300px] w-full items-center justify-center overflow-hidden rounded-xl bg-white/5 sm:min-h-[400px] lg:min-h-[500px]">
               <Image
                 src={image}
                 alt={`${alt} ${index + 1}`}
@@ -51,8 +51,8 @@ export default function ImageSwiper({
                 height={900}
                 unoptimized
                 priority={index === 0}
-                sizes="(max-width: 768px) 100vw, 900px"
-                className="h-full w-full object-contain p-2"
+                sizes="100vw"
+                className="!relative !h-auto !w-full max-h-[75vh] object-contain"
               />
             </div>
           </SwiperSlide>
