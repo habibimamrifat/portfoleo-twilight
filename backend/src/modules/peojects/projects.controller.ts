@@ -42,16 +42,35 @@ export class ProjectsController {
       storage: memoryStorage(),
     }),
   )
-  create(
+  async create(
     @CurrentUser() user: CurrentUserType,
     @Body() createProjectDto: CreateProjectDto,
     @UploadedFiles() images: Express.Multer.File[],
   ) {
-    return this.projectsService.create(
+    console.log('[CREATE PROJECT] 1. Controller reached');
+    console.log('[CREATE PROJECT] 2. User ID:', user.sub);
+    console.log('[CREATE PROJECT] 3. Images received:', images?.length ?? 0);
+
+    console.log(
+      '[CREATE PROJECT] 4. Image details:',
+      (images ?? []).map((image) => ({
+        name: image.originalname,
+        size: image.size,
+        mimetype: image.mimetype,
+      })),
+    );
+
+    console.log('[CREATE PROJECT] 5. Calling ProjectsService.create');
+
+    const result = await this.projectsService.create(
       user.sub,
       createProjectDto,
       images ?? [],
     );
+
+    console.log('[CREATE PROJECT] 6. Service completed successfully');
+
+    return result;
   }
 
   @Get(':id')
