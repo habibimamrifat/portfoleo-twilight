@@ -14,12 +14,11 @@ export default function HomePage() {
     <>
       <Home />
       <About />
+      <Stack />
       <Services />
       <Projects />
       <Experience />
       <Process />
-      <Stack />
-      {/* <Testimonials /> */}
       <Blog />
       <Contact />
     </>
