@@ -182,7 +182,7 @@ export default function Contact() {
               </p>
 
               <h2 className="mt-2 text-3xl font-bold">
-                Lets build something.
+                Ready to Build Something Remarkable?
               </h2>
             </div>
 

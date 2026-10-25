@@ -140,7 +140,7 @@ export default function Services() {
             </p>
 
             <h2 className="mt-2 text-3xl font-bold">
-              What I can build.
+              From Ideas to Applications
             </h2>
           </div>
         </Appear>
