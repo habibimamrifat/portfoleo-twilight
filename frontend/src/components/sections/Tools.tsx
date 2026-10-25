@@ -1,6 +1,5 @@
 "use client";
 
-import Card from "../common/util/Card";
 import { useEffect, useState } from "react";
 
 import { getApi } from "@/api/getapi";
@@ -19,7 +18,7 @@ const categoryNames: Record<string, string> = {
   FRONTEND: "Frontend",
   BACKEND: "Backend",
   DATABASE: "Database",
-  DEVTOOLS: "Dev Tools",
+  DEVTOOLS: "Development Tools",
   DEVOPS: "DevOps",
   DESIGN: "Design",
   OTHER: "Other",
@@ -40,9 +39,7 @@ export default function Tools() {
         if (cancelled) return;
 
         if (!response.ok) {
-          throw new Error(
-            result?.message || "Failed to fetch tools",
-          );
+          throw new Error(result?.message || "Failed to fetch tools");
         }
 
         const toolsData: Tool[] = Array.isArray(result)
@@ -53,10 +50,7 @@ export default function Tools() {
 
         setTools(toolsData);
       } catch (error) {
-        console.error(
-          "Failed to fetch tools:",
-          error,
-        );
+        console.error("Failed to fetch tools:", error);
       } finally {
         if (!cancelled) {
           setLoading(false);
@@ -85,84 +79,89 @@ export default function Tools() {
   );
 
   Object.values(groupedTools).forEach((categoryTools) => {
-    categoryTools.sort(
-      (a, b) => a.sortOrder - b.sortOrder,
-    );
+    categoryTools.sort((a, b) => a.sortOrder - b.sortOrder);
   });
 
   return (
-    <section
-      id="stack"
-      className="px-6 py-20 lg:px-10"
-    >
-      <div className="space-y-6">
-        {/* Section Heading */}
+    <section id="stack" className="px-6 py-20 lg:px-10">
+      <div className="space-y-10">
         <Appear>
           <div>
             <p className="text-sm uppercase tracking-[0.25em] text-blue-400">
-              Tools
+              Technologies
             </p>
 
             <h2 className="mt-2 text-3xl font-bold">
               Tools I work with.
             </h2>
+
+            <p className="mt-3 max-w-xl text-sm leading-6 text-white/50">
+              Technologies and tools I use to build, develop, and maintain
+              web applications.
+            </p>
           </div>
         </Appear>
 
         {loading ? (
-          <Appear delay={0.2}>
-            <div className="py-10 text-sm text-white/40">
-              Loading tools...
-            </div>
-          </Appear>
+          <div className="py-10 text-sm text-white/40">
+            Loading tools...
+          </div>
         ) : tools.length === 0 ? (
-          <Appear delay={0.2}>
-            <div className="py-10 text-sm text-white/40">
-              No tools available.
-            </div>
-          </Appear>
+          <div className="py-10 text-sm text-white/40">
+            No tools available.
+          </div>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-10">
             {Object.entries(groupedTools).map(
               ([category, categoryTools], categoryIndex) => (
                 <Appear
                   key={category}
                   direction="none"
-                  delay={categoryIndex * 0.3}
+                  delay={categoryIndex * 0.15}
                 >
-                  <Card className="min-h-[140px] p-5">
-                    <h3 className="mb-4 text-sm font-semibold text-white/70">
-                      {categoryNames[category] ?? category}
-                    </h3>
+                  <div>
+                    <div className="mb-5 flex items-center gap-3">
+                      <h3 className="text-sm font-semibold uppercase tracking-wider text-white/70">
+                        {categoryNames[category] ?? category}
+                      </h3>
 
-                    <div className="flex flex-wrap gap-2">
-                      {categoryTools.map(
-                        (tool, toolIndex) => (
-                          <Appear
-                            key={tool.id}
-                            direction="none"
-                            delay={toolIndex * 0.15}
+                      <div className="h-px flex-1 bg-white/10" />
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-x-3 gap-y-6 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
+                      {categoryTools.map((tool, toolIndex) => (
+                        <Appear
+                          key={tool.id}
+                          direction="none"
+                          delay={toolIndex * 0.04}
+                        >
+                          <div
+                            title={tool.description || tool.name}
+                            className="group flex min-h-[112px] flex-col items-center justify-center gap-3 rounded-xl px-2 py-4 text-center transition duration-300 hover:bg-white/[0.04]"
                           >
-                            <Card className="flex items-center gap-2 px-3 py-2 transition duration-300 hover:bg-white/10">
+                            <div className="flex h-12 w-12 items-center justify-center transition duration-300 group-hover:scale-110">
                               {tool.logo ? (
                                 <img
                                   src={tool.logo}
                                   alt={tool.name}
-                                  className="h-4 w-4 object-contain"
+                                  loading="lazy"
+                                  className="h-10 w-10 object-contain"
                                 />
                               ) : (
-                                <div className="h-4 w-4 rounded-sm bg-white/5" />
+                                <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-sm font-semibold text-white/60">
+                                  {tool.name.slice(0, 1).toUpperCase()}
+                                </div>
                               )}
+                            </div>
 
-                              <span className="text-xs text-white/60">
-                                {tool.name}
-                              </span>
-                            </Card>
-                          </Appear>
-                        ),
-                      )}
+                            <span className="text-xs font-medium leading-5 text-white/65 transition-colors group-hover:text-white sm:text-sm">
+                              {tool.name}
+                            </span>
+                          </div>
+                        </Appear>
+                      ))}
                     </div>
-                  </Card>
+                  </div>
                 </Appear>
               ),
             )}
