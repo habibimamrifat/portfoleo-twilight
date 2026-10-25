@@ -20,7 +20,7 @@ export default function Projects() {
               </p>
 
               <h2 className="mt-2 text-3xl font-bold">
-                Things I have built.
+                Turning Ideas into Working Solutions
               </h2>
             </div>
 

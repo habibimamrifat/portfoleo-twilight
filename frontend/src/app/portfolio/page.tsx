@@ -18,8 +18,8 @@ export default function HomePage() {
       <Services />
       <Projects />
       <Experience />
-      <Process />
       <Blog />
+      <Process />
       <Contact />
     </>
   );
